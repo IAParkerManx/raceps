@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RacePS Dragy probe</title>
+<link rel="manifest" href="manifest.json">
+<style>
+  body { font: 16px system-ui, sans-serif; margin: 1rem auto; max-width: 40rem; padding: 0 1rem; }
+  #speed { font-size: 4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: .25rem 1rem; }
+  dt { color: #666; } dd { margin: 0; font-variant-numeric: tabular-nums; }
+  pre { background: #f2f2f2; max-height: 14rem; overflow: auto; padding: .5rem; font-size: 12px; }
+  button { font-size: 1rem; margin-right: .5rem; padding: .5rem 1rem; }
+</style>
+</head>
+<body>
+<h1>RacePS Dragy probe</h1>
+<p>Close the official Dragy app first, because the device may refuse a second connection.</p>
+<button id="connect">Connect</button>
+<button id="export" disabled>Download CSV</button>
+<div id="speed">-- km/h</div>
+<dl>
+  <dt>Status</dt><dd id="status">Not connected</dd>
+  <dt>Sample rate</dt><dd id="rate">-</dd>
+  <dt>Fix / satellites</dt><dd id="fix">-</dd>
+  <dt>Position accuracy</dt><dd id="hacc">-</dd>
+  <dt>Battery</dt><dd id="battery">-</dd>
+  <dt>Frames good / bad</dt><dd id="frames">0 / 0</dd>
+  <dt>Run results</dt><dd id="results">Waiting for a standing start</dd>
+</dl>
+<h2>Log</h2>
+<pre id="log"></pre>
+<script src="dragy-core.js"></script>
+<script>
+const SERVICE = 0xfd00, TELEMETRY = 0xfd02, HANDSHAKE = 0xfd03, STATUS = 0xfd04;
+const el = (id) => document.getElementById(id);
+const log = (text) => { el("log").textContent += text + "\n"; el("log").scrollTop = 1e9; };
+const toBytes = (view) => new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+const hex = (bytes) => Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" ");
+
+const reassembler = new Reassembler();
+const timer = new RunTimer([
+  { label: "0-60 mph", kmh: 96.56 },
+  { label: "0-100 km/h", kmh: 100 },
+  { label: "0-200 km/h", kmh: 200 },
+]);
+const samples = [];
+let good = 0;
+let rawLogged = 0;
+let characteristics = [];
+
+function medianIntervalMs() {
+  const recent = samples.slice(-50);
+  const gaps = recent.slice(1).map((s, i) => s.iTowMs - recent[i].iTowMs).sort((a, b) => a - b);
+  return gaps[Math.floor(gaps.length / 2)];
+}
+
+function onSample(sample) {
+  good++;
+  samples.push(sample);
+  el("speed").textContent = `${sample.speedKmh.toFixed(1)} km/h`;
+  el("fix").textContent = `type ${sample.fixType}, ${sample.fixOk ? "OK" : "not OK"} / ${sample.satellites} sats`;
+  el("hacc").textContent = `${sample.hAccM.toFixed(2)} m`;
+  const interval = medianIntervalMs();
+  if (interval > 0) el("rate").textContent = `${(1000 / interval).toFixed(1)} Hz (${interval} ms)`;
+  for (const result of timer.update(sample)) log(`${result.label}: ${result.seconds.toFixed(2)} s`);
+  el("results").textContent = timer.results.map((r) => `${r.label} ${r.seconds.toFixed(2)} s`).join(", ")
+    || "Waiting for a standing start";
+  el("export").disabled = false;
+}
+
+function onTelemetry(event) {
+  const bytes = toBytes(event.target.value);
+  if (rawLogged++ < 5) log(`FD02: ${hex(bytes)}`);
+  reassembler.push(bytes).forEach(onSample);
+  el("frames").textContent = `${good} / ${reassembler.badFrames}`;
+}
+
+function onStatus(view) {
+  const bytes = toBytes(view);
+  log(`FD04: ${hex(bytes)}`);
+  if (bytes.length > 1 && bytes[1] <= 100) el("battery").textContent = `${bytes[1]}%`;
+}
+
+async function connect() {
+  const device = await navigator.bluetooth.requestDevice({
+    filters: [{ services: [SERVICE] }, { namePrefix: "DRG" }],
+    optionalServices: [SERVICE],
+  });
+  device.addEventListener("gattserverdisconnected", () => {
+    el("status").textContent = "Disconnected";
+    log("Disconnected");
+  });
+  el("status").textContent = `Connecting to ${device.name}`;
+  const server = await device.gatt.connect();
+  const service = await server.getPrimaryService(SERVICE);
+
+  const telemetry = await service.getCharacteristic(TELEMETRY);
+  telemetry.addEventListener("characteristicvaluechanged", onTelemetry);
+  await telemetry.startNotifications();
+
+  const status = await service.getCharacteristic(STATUS);
+  status.addEventListener("characteristicvaluechanged", (e) => onStatus(e.target.value));
+  await status.startNotifications();
+  onStatus(await status.readValue());
+  characteristics = [telemetry, status]; // Keep references so they aren't garbage collected.
+
+  const handshake = await service.getCharacteristic(HANDSHAKE);
+  const challenge = toBytes(await handshake.readValue());
+  log(`FD03 challenge: ${hex(challenge)}`);
+  if (challenge.length < 2) throw new Error("FD03 returned fewer than 2 bytes");
+  const response = handshakeResponse(challenge);
+  // Some iPhone Web Bluetooth browsers only offer the older writeValue.
+  await (handshake.writeValueWithResponse ? handshake.writeValueWithResponse(response) : handshake.writeValue(response));
+  log(`FD03 response: ${hex(response)}`);
+  el("status").textContent = `Connected to ${device.name}. Waiting for telemetry.`;
+}
+
+function exportCsv() {
+  const fields = Object.keys(samples[0]);
+  const rows = samples.map((s) => fields.map((f) => s[f]).join(","));
+  const blob = new Blob([[fields.join(","), ...rows].join("\n")], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "dragy-session.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+el("connect").onclick = () => connect().catch((error) => {
+  el("status").textContent = `Failed: ${error.message}`;
+  log(`Error: ${error.message}`);
+});
+el("export").onclick = exportCsv;
+
+// The screen lock would suspend the page and stop telemetry, so hold it on while connected.
+// Browsers release the lock when the page is hidden, so take it again on return.
+let wantWakeLock = false;
+async function holdScreenOn() {
+  if (!wantWakeLock || !navigator.wakeLock) return;
+  try {
+    await navigator.wakeLock.request("screen");
+  } catch (error) {
+    log(`Wake lock unavailable: ${error.message}`);
+  }
+}
+el("connect").addEventListener("click", () => { wantWakeLock = true; holdScreenOn(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") holdScreenOn();
+});
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch((error) => log(`Offline support failed: ${error.message}`));
+}
+if (!navigator.bluetooth) el("status").textContent = "Web Bluetooth is unavailable in this browser. Use Chrome or Edge.";
+</script>
+</body>
+</html>

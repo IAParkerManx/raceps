@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RacePS Run, moving</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#a0a6b1}
+a:focus-visible{outline:2px solid #ff5a1f;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0b0d10; color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column">
+  <div role="status" style="background: #ff5a1f; color: #140600; padding: 28px 16px 16px; font-size: 34px; font-weight: 800; letter-spacing: -0.01em; text-align: center">Running</div>
+
+  <section style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center">
+    <div style="font-size: 184px; font-weight: 800; letter-spacing: -0.05em; line-height: 1; font-variant-numeric: tabular-nums">118</div>
+    <div style="color: #a0a6b1; font-size: 18px; font-weight: 600; letter-spacing: 0.12em">KM/H</div>
+  </section>
+
+  <section style="padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px">
+    <h2 style="margin: 0; color: #a0a6b1; font-size: 13px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Live estimate</h2>
+    <sc-for list="{{ live }}" as="row" hint-placeholder-count="3">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; background: #15181d; border: 1px solid #272b33; border-radius: 12px; padding: 12px 16px">
+        <span style="font-size: 18px; font-weight: 600">{{ row.label }}</span>
+        <span style="font-size: 34px; font-weight: 800; font-variant-numeric: tabular-nums">{{ row.value }}</span>
+      </div>
+    </sc-for>
+    <p style="margin: 4px 0 0; color: #a0a6b1; font-size: 14px; text-align: center">Final times open when you stop.</p>
+    <a href="Result.dc.html" style="text-align: center; font-size: 13px; padding: 4px">Prototype only: simulate stopping</a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      live: [
+        { label: '0-60 km/h', value: '2.7 s' },
+        { label: '0-100 km/h', value: '5.4 s' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

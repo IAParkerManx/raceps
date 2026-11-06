@@ -1,0 +1,1961 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RacePS">
+<meta name="theme-color" content="#0b0d10">
+<title>RacePS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d10; --panel: #15181d; --line: #272b33;
+    --text: #f4f5f7; --muted: #a0a6b1; --soft: #d6d9de; --accent: #ff5a1f; --on-accent: #140600;
+    --good: #3ddc84; --warn: #ffc247; --bad: #ff6b6b;
+    --tabs: 4.1rem;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--text); margin: 0 auto; max-width: 30rem;
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem calc(var(--tabs) + env(safe-area-inset-bottom) + 1rem);
+  }
+  body[data-moving="true"] { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  h1 { font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+  .brand { font-size: 1.35rem; font-style: italic; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+  .brand span { color: var(--accent); }
+  button {
+    border: 0; border-radius: .8rem; color: inherit; cursor: pointer; font: inherit; font-weight: 700;
+    min-height: 3.25rem; padding: .75rem 1rem; width: 100%;
+  }
+  .secondary { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  .secondary:disabled { color: var(--muted); opacity: .5; }
+  .primary, #start { background: var(--accent); color: var(--on-accent); font-size: 1.25rem; font-weight: 800; min-height: 4rem; }
+  .danger { background: transparent; border: 1px solid var(--bad); color: var(--bad); }
+  .stack { display: flex; flex-direction: column; gap: .75rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem; }
+  .panel h2, .label {
+    color: var(--muted); font-size: .75rem; font-weight: 700; letter-spacing: .1em;
+    margin: 0 0 .5rem; text-transform: uppercase;
+  }
+  .note, .hint { color: var(--muted); font-size: .85rem; margin: .4rem 0 0; }
+  .hint { color: var(--soft); font-size: .9rem; margin: 0; }
+  .row { align-items: baseline; border-top: 1px solid var(--line); display: flex; gap: .75rem; justify-content: space-between; padding: .55rem 0; }
+  .time { font-size: 1.4rem; font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+  .trap { color: var(--muted); font-size: .8rem; }
+  .grade { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .grade.good { color: var(--good); } .grade.fair { color: var(--warn); } .grade.rejected { color: var(--bad); } .grade.out { color: var(--bad); }
+  input:not([type]), select { background: var(--bg); border: 1px solid var(--line); border-radius: .6rem; color: var(--text); font: inherit; min-height: 2.75rem; padding: .5rem .7rem; width: 100%; }
+  .field { display: block; font-size: .875rem; font-weight: 600; margin-top: .6rem; }
+  .field input { margin-top: .25rem; }
+  dl { display: grid; font-size: .9rem; gap: .35rem 1rem; grid-template-columns: auto 1fr; margin: 0; }
+  dt { color: var(--muted); } dd { font-variant-numeric: tabular-nums; margin: 0; text-align: right; }
+  .share { align-items: flex-start; display: flex; gap: .75rem; }
+  .share input { accent-color: var(--accent); flex: none; height: 1.4rem; margin: .1rem 0 0; width: 1.4rem; }
+  .share strong { display: block; }
+  #update { align-items: center; background: var(--panel); border: 1px solid var(--accent); border-radius: .8rem; display: flex; gap: .75rem; margin-bottom: .75rem; padding: .75rem; }
+  #update .note { margin-top: .2rem; }
+  #updateReload { background: var(--accent); color: var(--on-accent); flex: none; width: auto; }
+  #alert { background: #2a1416; border: 1px solid var(--bad); border-radius: .8rem; font-size: .9rem; margin: 0; padding: .75rem; }
+  #motionWarn { margin: 0; }
+
+  /* Run */
+  #viewRun { display: flex; flex-direction: column; gap: .75rem; min-height: calc(100dvh - var(--tabs) - 3rem); }
+  #status {
+    border: 1px solid var(--line); border-radius: 1rem; color: var(--muted);
+    font-size: 1.1rem; font-weight: 700; padding: .7rem 1rem; text-align: center;
+  }
+  #status[data-state="wait"] { color: var(--warn); border-color: var(--warn); font-size: 1.5rem; font-weight: 800; }
+  #status[data-state="ready"] { border: 2px solid var(--good); color: var(--good); font-size: 2.1rem; font-weight: 800; }
+  #status[data-state="running"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-size: 2.1rem; font-weight: 800; }
+  #status[data-state="error"] { border-color: var(--bad); color: var(--bad); font-size: 1.5rem; font-weight: 800; }
+  .gauge { padding: .75rem 0; text-align: center; }
+  #speed { font-size: clamp(7rem, 42vw, 10.5rem); font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+  .unit { color: var(--muted); font-size: .9rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  .tiles { display: grid; gap: .5rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tiles > div { background: var(--panel); border: 1px solid var(--line); border-radius: .75rem; padding: .6rem .75rem; }
+  .tiles dt { font-size: .75rem; }
+  .tiles dd { font-size: 1rem; font-weight: 700; margin-top: .1rem; text-align: left; }
+  #median { align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; display: flex; font-weight: 400; gap: .75rem; justify-content: space-between; padding: .75rem 1rem; text-align: left; }
+  #median .label { display: block; margin: 0 0 .1rem; }
+  #median strong { display: block; font-size: .95rem; font-weight: 600; }
+  .figure { text-align: right; }
+  .figure .time { display: block; }
+  .figure small { color: var(--muted); font-size: .75rem; }
+  #viewSummary { margin-top: .75rem; min-height: 2.75rem; padding: .4rem 1rem; }
+  .controls { margin-top: .75rem; }
+  #stop { margin-top: 0; min-height: 3rem; }
+  #start:disabled { display: none; }
+  body:not([data-started="true"]) #stop { display: none; }
+  .steps { margin: .5rem 0 .25rem; padding-left: 1.25rem; }
+  .steps li { margin: .3rem 0; }
+  #installPanel details { border-top: 1px solid var(--line); padding: .6rem 0; }
+  #voiceQuick { margin-top: auto; }
+  #liveTimes { display: none; }
+  body[data-started="true"] #setupHint { display: none; }
+  body:not([data-started="true"]) #sensors, body:not([data-started="true"]) #voiceQuick { display: none; }
+  body[data-moving="true"] .appHeader,
+  body[data-moving="true"] #setupHint,
+  body[data-moving="true"] #sensors,
+  body[data-moving="true"] #median,
+  body[data-moving="true"] #lastRun,
+  body[data-moving="true"] #voiceQuick,
+  body[data-moving="true"] #tabs { display: none; }
+  body[data-moving="true"] #liveTimes { display: flex; }
+  body[data-moving="true"] #speed { font-size: clamp(8rem, 47vw, 11.5rem); }
+  #liveTimes { flex-direction: column; gap: .5rem; }
+  #liveTimes .label { margin: 0; }
+  .liveRow { align-items: baseline; background: var(--panel); border: 1px solid var(--line); border-radius: .75rem; display: flex; justify-content: space-between; padding: .6rem 1rem; }
+  .liveRow span:first-child { font-size: 1.1rem; font-weight: 600; }
+  .liveRow span:last-child { font-size: 2.1rem; font-variant-numeric: tabular-nums; font-weight: 800; }
+  #liveTimes .note { margin: 0; text-align: center; }
+
+  /* Tabs */
+  #tabs {
+    background: var(--bg); border-top: 1px solid var(--line); bottom: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    left: 50%; max-width: 30rem; padding-bottom: env(safe-area-inset-bottom); position: fixed; transform: translateX(-50%); width: 100%; z-index: 5;
+  }
+  #tabs button { align-items: center; background: none; border-radius: 0; color: var(--muted); display: flex; flex-direction: column; font-size: .75rem; font-weight: 600; gap: .15rem; min-height: var(--tabs); padding: .4rem; }
+  #tabs button[aria-current="page"] { color: var(--accent); font-weight: 700; }
+  #tabs svg, .back svg, .sessionRow svg { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
+
+  /* History */
+  #carFilters { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .chip { border: 1px solid var(--line); border-radius: 99px; background: transparent; font-size: .875rem; min-height: 2.75rem; padding: 0 .9rem; width: auto; }
+  .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .chip[data-unit] { border-radius: .75rem; min-height: 3rem; width: 100%; }
+  .sessionRow { align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; display: flex; font-weight: 400; gap: .75rem; justify-content: space-between; min-height: 5.25rem; padding: .75rem; padding-left: 1rem; text-align: left; }
+  .sessionRow strong { display: block; font-weight: 700; }
+  .sessionRow small { color: var(--muted); display: block; font-size: .8rem; }
+  .sessionRow .right { align-items: center; display: flex; flex: none; gap: .5rem; }
+  .historyFoot { align-items: center; display: flex; gap: .75rem; justify-content: space-between; }
+  .historyFoot .note { margin: 0; }
+  .linkButton { background: none; color: var(--accent); font-size: .875rem; min-height: 2.75rem; padding: 0; width: auto; flex: none; }
+
+  /* Overlays */
+  #summary, #sessionView { background: var(--bg); inset: 0; overflow: auto; padding: max(1rem, env(safe-area-inset-top)) 1rem max(1.5rem, env(safe-area-inset-bottom)); position: fixed; z-index: 10; }
+  #summary { z-index: 11; }
+  #summary > *, #sessionView > * { margin-left: auto; margin-right: auto; max-width: 28rem; }
+  #summary > * + *, #sessionView > * + * { margin-top: .75rem; }
+  .back { align-items: center; background: none; color: var(--muted); display: flex; font-size: .9375rem; font-weight: 600; gap: .25rem; min-height: 2.75rem; padding: 0; width: auto; }
+  .overlayHead { align-items: center; display: flex; justify-content: space-between; }
+  .overlayHead .note { margin: 0; }
+  #sessionView > .back { margin-left: max(0px, calc((100% - 28rem) / 2)); }
+  .runRow { align-items: center; border-top: 1px solid var(--line); display: flex; gap: .5rem; padding: .35rem 0; }
+  .runOpen { background: none; flex: 1; font-weight: 400; min-height: 3rem; min-width: 0; padding: .25rem 0; text-align: left; }
+  .runOpen strong { font-size: .95rem; margin-right: .4rem; }
+  .runOpen small { color: var(--muted); display: block; font-size: .8rem; font-variant-numeric: tabular-nums; }
+  .runToggle { background: transparent; border: 1px solid var(--line); border-radius: .6rem; flex: none; font-size: .8rem; min-height: 2.75rem; min-width: 5.25rem; padding: 0 .5rem; width: auto; }
+  #deleteConfirm .cardNav { margin-top: .75rem; }
+
+  /* Run result */
+  #card { background: none; padding: 0; }
+  #card > * + * { margin-top: .75rem; }
+  #cardDriver:empty { display: none; }
+  #cardDriver { font-size: 1.1rem; font-weight: 700; }
+  #cardType { color: var(--soft); font-size: .9rem; margin: .25rem 0 0; }
+  #cardMeta { margin: .1rem 0 0; }
+  .heroTop { align-items: center; display: flex; justify-content: space-between; }
+  .heroLabel { font-size: .95rem; font-weight: 600; }
+  .heroTop .grade { border: 1px solid currentColor; border-radius: 99px; padding: .15rem .6rem; }
+  .heroTime { align-items: baseline; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .heroTime b { font-size: 4.5rem; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; }
+  .heroTime span { font-size: 1.25rem; font-weight: 700; }
+  .heroTime small { color: var(--muted); font-size: 1rem; font-variant-numeric: tabular-nums; }
+  #cardCompare { color: var(--soft); font-size: .875rem; margin: .4rem 0 0; }
+  #cardChart svg { display: block; height: auto; margin-top: .4rem; width: 100%; }
+  #cardBody h3 { color: var(--accent); font-size: .75rem; letter-spacing: .1em; margin: 0 0 .25rem; text-transform: uppercase; }
+  .cardNav { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+</style>
+</head>
+<body data-started="false" data-moving="false">
+<div id="update" role="status" hidden>
+  <div><strong>New version available</strong><p class="note">Your saved runs are kept. Reloading clears this session's raw sensor data, so download your CSV first if you need it.</p></div>
+  <button id="updateReload">Reload</button>
+</div>
+
+<main id="viewRun">
+  <header class="appHeader"><h1 class="brand">Race<span>PS</span></h1></header>
+  <div id="status" role="status" data-state="idle">Not started</div>
+  <div class="controls">
+    <button id="start">Start</button>
+    <button id="stop" class="secondary">Stop</button>
+  </div>
+  <p class="note" id="modeNote" hidden></p>
+
+  <section class="gauge">
+    <div id="speed">0</div>
+    <div class="unit" id="speedUnit">km/h</div>
+  </section>
+
+  <section id="liveTimes">
+    <h2 class="label" id="liveTitle" hidden>Live estimate</h2>
+    <div class="stack" id="liveRows" style="gap:.5rem"></div>
+    <p class="note" id="liveNote" hidden>Final times open when you stop.</p>
+  </section>
+
+  <p id="alert" role="alert" hidden></p>
+  <p id="motionWarn" class="note" role="status" hidden>The motion sensor isn't sending data, so launch times will be less accurate. On Android, check that Motion sensors are allowed in Chrome's site settings for this page, then reload.</p>
+
+  <dl class="tiles" id="sensors">
+    <div><dt>GPS accuracy</dt><dd id="tileAccuracy">-</dd></div>
+    <div><dt>GPS rate</dt><dd id="tileRate">-</dd></div>
+    <div><dt>Motion</dt><dd id="tileMotion">-</dd></div>
+  </dl>
+
+  <section class="panel" id="setupHint">
+    <h2>Before you start</h2>
+    <p class="hint">Mount the phone rigidly with a clear view of the sky. Stop on flat road and stay still until Ready. Do several runs, in both directions where safe and legal. Full-throttle distance runs belong on a closed track or drag strip.</p>
+    <button id="installHint" class="linkButton" hidden>Add RacePS to your home screen</button>
+  </section>
+
+  <button id="median" hidden></button>
+
+  <section class="panel" id="lastRun">
+    <h2>Last run</h2>
+    <div id="final"><p class="note">No runs yet</p></div>
+    <button id="viewSummary" class="secondary" hidden>View run summary</button>
+  </section>
+
+  <button id="voiceQuick" class="secondary"></button>
+  <p class="note" id="voiceProblem" role="status" hidden></p>
+</main>
+
+<main id="viewHistory" class="stack" hidden>
+  <h1>History</h1>
+  <div id="carFilters"></div>
+  <div id="sessions" class="stack" style="gap:.6rem"></div>
+  <div class="historyFoot">
+    <p class="note" id="historyCount"></p>
+    <button id="historyBackup" class="linkButton">Back up</button>
+  </div>
+</main>
+
+<main id="viewSettings" class="stack" hidden>
+  <h1>Settings</h1>
+
+  <section class="panel" id="installPanel">
+    <h2>Install on your phone</h2>
+    <p class="note" id="installedNote" hidden>You're using the home screen app.</p>
+    <div id="installSteps">
+      <p class="note">Adding RacePS to your home screen opens it full screen, like an app.</p>
+      <details data-platform="ios-safari">
+        <summary>iPhone, Safari</summary>
+        <ol class="steps">
+          <li>Tap the Share button, the square with an arrow pointing up.</li>
+          <li>Scroll down and tap Add to Home Screen.</li>
+          <li>Tap Add, then open RacePS from its new icon.</li>
+        </ol>
+      </details>
+      <details data-platform="ios-chrome">
+        <summary>iPhone, Chrome</summary>
+        <ol class="steps">
+          <li>Tap the Share button next to the address bar.</li>
+          <li>Tap Add to Home Screen.</li>
+          <li>Tap Add, then open RacePS from its new icon.</li>
+        </ol>
+      </details>
+      <details data-platform="android">
+        <summary>Android, Chrome</summary>
+        <ol class="steps">
+          <li>Tap the menu, the three dots at the top right.</li>
+          <li>Tap Add to Home screen or Install app.</li>
+          <li>Confirm, then open RacePS from its new icon.</li>
+        </ol>
+      </details>
+      <p class="note">On iPhone, the home screen app keeps its own saved runs, separate from the browser. To move runs across, tap Back up in History, then restore the file in the home screen app.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Name on your summary</h2>
+    <p class="note" style="margin:0">Optional. Stays on this phone and isn't sent in diagnostics.</p>
+    <label class="field">Driver<input id="driver" maxlength="30" placeholder="Driver" autocomplete="off"></label>
+    <label class="field">Car<input id="car" maxlength="30" placeholder="Car" autocomplete="off"></label>
+    <p class="note">Changing the car starts a new session. Runs you've already saved keep their name.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Speed units</h2>
+    <div class="cardNav">
+      <button class="chip" id="unitKmh" data-unit="km/h" aria-pressed="true">km/h</button>
+      <button class="chip" id="unitMph" data-unit="mph" aria-pressed="false">mph</button>
+    </div>
+    <p class="note">Changes the speedometer, peak and trap speeds. Timing names like 0-100 km/h stay the same, and voice callouts stay in km/h.</p>
+  </section>
+
+  <section class="panel">
+    <label class="share">
+      <input type="checkbox" id="voice" checked>
+      <span>
+        <strong>Voice callouts</strong>
+        <span class="note">Says Ready or "forty roll, ready", then announces speeds and 100, 400 and 800 metres during a run from a stop. Callouts can come about a second late, so use the results for timing.</span>
+      </span>
+    </label>
+  </section>
+
+  <section class="panel">
+    <h2>Timing mode</h2>
+    <select id="timingMode" aria-label="Timing mode">
+      <option value="">Auto: from a stop, rolls and splits</option>
+      <option value="30">From 30 km/h</option>
+      <option value="40">From 40 km/h</option>
+      <option value="60">From 60 km/h</option>
+      <option value="100">From 100 km/h</option>
+    </select>
+    <p class="note">From a set speed, the clock starts the moment you pass it, like 60-100 or 100-200 on a Dragy. You can start from a stop or from rolling below that speed. Both ends of each time are read from GPS, so its delay cancels out.</p>
+  </section>
+
+  <section class="panel" id="voiceChooser" hidden>
+    <h2>Voice</h2>
+    <select id="voiceChoice" aria-label="Voice"></select>
+    <button id="voiceTest" class="secondary" style="margin-top:.75rem">Test voice</button>
+    <p class="note">Callouts use a recorded voice that works in the home screen app. The voice chosen here is only used if those recordings can't play.</p>
+  </section>
+
+  <section class="panel stack" id="savedRunsPanel">
+    <div>
+      <h2>Saved runs</h2>
+      <p class="note" id="runsStatus" role="status" style="color:var(--text);font-size:.9375rem;margin:0"></p>
+      <p class="note">A backup holds your run times, speed traces, and driver and car names. It has no GPS position. Your browser can clear saved runs if the app goes unused, so keep a copy somewhere safe.</p>
+    </div>
+    <button id="backupRuns" class="secondary">Download backup</button>
+    <button id="restoreRuns" class="secondary">Restore from backup</button>
+    <input type="file" id="restoreFile" accept=".json,application/json" aria-label="Backup file" hidden>
+    <button id="export" class="secondary" disabled>Download my session (CSV)</button>
+  </section>
+
+  <section class="panel">
+    <label class="share">
+      <input type="checkbox" id="share">
+      <span>
+        <strong>Share diagnostics with RacePS</strong>
+        <span class="note">Sends speed, motion sensor data, run results, device type and errors to help improve timing. Your GPS position is not sent. Netlify, the host, may record your IP address. Off by default.</span>
+      </span>
+    </label>
+    <p class="note" id="shareStatus"></p>
+  </section>
+
+  <section class="panel">
+    <h2>Diagnostics</h2>
+    <dl>
+      <dt>Live estimate</dt><dd id="results">-</dd>
+      <dt>GPS delay found</dt><dd id="delay">-</dd>
+      <dt>GPS rate</dt><dd id="rate">-</dd>
+      <dt>GPS accuracy</dt><dd id="accuracy">-</dd>
+      <dt>Motion sensor</dt><dd id="motion">-</dd>
+    </dl>
+    <p class="note" id="versionNote"></p>
+  </section>
+</main>
+
+<nav id="tabs" aria-label="Main">
+  <button data-view="Run" aria-current="page"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><path d="M4 18a9 9 0 1 1 16 0"></path><path d="M12 14l4-5"></path><circle cx="12" cy="14" r="1.2"></circle></svg>Run</button>
+  <button data-view="History"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>History</button>
+  <button data-view="Settings"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>Settings</button>
+</nav>
+
+<div id="sessionView" role="dialog" aria-label="Session detail" hidden>
+  <button id="sessionBack" class="back"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>History</button>
+  <div>
+    <h1 id="sessionCar"></h1>
+    <p class="note" id="sessionMeta" style="margin:.1rem 0 0"></p>
+  </div>
+  <section class="panel">
+    <h2>Median of counted runs</h2>
+    <div id="sessionMedians"></div>
+    <p class="note">Launch times only count from a stop. Splits count from any run.</p>
+  </section>
+  <section class="panel">
+    <h2>Runs</h2>
+    <div id="sessionRuns"></div>
+  </section>
+  <p class="note">Phone GPS estimate. Compare runs made with RacePS, in similar conditions.</p>
+  <button id="deleteSession" class="danger">Delete this session</button>
+  <section class="panel" id="deleteConfirm" hidden>
+    <p id="deleteMessage" style="margin:0"></p>
+    <div class="cardNav">
+      <button id="deleteNo" class="secondary">Keep it</button>
+      <button id="deleteYes" class="danger">Delete</button>
+    </div>
+  </section>
+</div>
+
+<div id="summary" role="dialog" aria-label="Run summary" hidden>
+  <div class="overlayHead">
+    <button id="summaryToSession" class="back"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Session</button>
+    <p class="note" id="cardPosition"></p>
+  </div>
+  <div id="card">
+    <section class="panel">
+      <div class="heroTop">
+        <span class="heroLabel" id="cardHeroLabel"></span>
+        <span class="grade" id="cardGrade"></span>
+      </div>
+      <div class="heroTime" id="cardHeroTime"></div>
+      <p id="cardCompare" hidden></p>
+      <div id="cardDriver" style="margin-top:.5rem"></div>
+      <p class="note" id="cardMeta"></p>
+      <p id="cardType"></p>
+    </section>
+    <figure class="panel" id="cardChartPanel" style="margin:0">
+      <figcaption class="label" style="margin:0">Speed over time</figcaption>
+      <div id="cardChart"></div>
+    </figure>
+    <div id="cardBody" class="stack"></div>
+    <p class="note" id="cardNotes"></p>
+    <p class="note">Phone GPS estimate. Compare runs made with RacePS, in similar conditions.</p>
+  </div>
+  <div class="cardNav">
+    <button id="runPrev" class="secondary">Previous run</button>
+    <button id="runNext" class="secondary">Next run</button>
+  </div>
+  <button id="shareCard" class="secondary">Share image</button>
+  <button id="summaryClose" class="primary">Back to timing</button>
+</div>
+
+<!-- Netlify detects this hidden form at deploy time. Logs are posted to it from script. -->
+<form name="raceps-logs" data-netlify="true" hidden>
+  <input name="session"><input name="version"><input name="device"><textarea name="payload"></textarea>
+</form>
+
+<script src="phone-core.js"></script>
+<script src="run-store.js"></script>
+<script src="remote-log.js"></script>
+<script>
+const APP_VERSION = "0.14.1"; // Keep in step with version.json. A test checks this.
+const UPDATE_CHECK_MS = 300000;
+const UPDATE_FLUSH_TIMEOUT_MS = 2000;
+let updateAvailable = null;
+const el = (id) => document.getElementById(id);
+const TARGETS = [
+  { label: "0-60 km/h", kmh: 60 },
+  { label: "0-60 mph", kmh: 96.56 },
+  { label: "0-100 km/h", kmh: 100 },
+  { label: "0-150 km/h", kmh: 150 },
+  { label: "0-200 km/h", kmh: 200 },
+];
+const SPLITS = [
+  { label: "60-100 km/h", fromKmh: 60, toKmh: 100 },
+  { label: "100-150 km/h", fromKmh: 100, toKmh: 150 },
+  { label: "150-200 km/h", fromKmh: 150, toKmh: 200 },
+];
+const RUNS_KEY = "raceps-runs";
+const DRIVER_KEY = "raceps-driver";
+const DISTANCE_TARGETS = [
+  { label: "100 m", meters: 100 },
+  { label: "1/8 mile", meters: 201.17 },
+  { label: "400 m", meters: 400 },
+  { label: "1/4 mile", meters: 402.34 },
+  { label: "800 m", meters: 800 },
+];
+const DISTANCE_CALLOUTS_M = [100, 400, 800];
+const READY_AFTER_MS = 3000;
+const MIN_RUN_PEAK_KMH = 30;
+const RUN_OVER_DROP_KMH = 15; // Lifting off by this much ends the run.
+const MAX_MOTION_LOG = 200000; // Bounds memory on long sessions.
+const RUN_WINDOW_MS = 60000; // A pull into a long cruise must not bloat analysis or logs.
+const FAILED_RUN_HISTORY_MS = 12000;
+const SHARE_KEY = "raceps-share";
+const UNIT_KEY = "raceps-unit";
+const MOVING_KMH = 10;
+const HEADLINE_LABELS = ["0-100 km/h", ...TARGETS.map((t) => t.label), ...DISTANCE_TARGETS.map((d) => d.label), ...SPLITS.map((s) => s.label)];
+const SESSION_LABELS = [...TARGETS.map((t) => t.label), ...SPLITS.map((s) => s.label), ...DISTANCE_TARGETS.map((d) => d.label)];
+const timer = new LaunchTimer(TARGETS);
+const samples = [];
+const motionLog = [];
+const finishedRuns = [];
+let currentRun = null;
+let stillSince = null;
+let motionSeen = false;
+const MOTION_STALL_MS = 5000;
+const MOTION_RETRY_MS = 15000;
+const WAITING_AFTER_MS = 4000; // Short gaps are normal, and shouldn't flicker the status.
+const HEALTH_REPORT_MS = 60000;
+const HEALTH_FLUSH_MS = 300000; // Sends cruise health without using a submission a minute.
+const CALLOUT_SPEEDS_KMH = [60, 100, 150, 200];
+const VOICE_RATE = 0.7; // Slower than normal, so words carry over road noise.
+const VOICE_NAME_KEY = "raceps-voice-name";
+const MODE_KEY = "raceps-timing-from";
+const MODE_SPEEDS_KMH = [30, 40, 60, 100];
+const SPEECH_START_TIMEOUT_MS = 2500;
+const SPEECH_AFTER_CANCEL_MS = 150;
+const VOICE_KEY = "raceps-voice";
+const pullTracker = new PullTracker();
+const rollReadyWatch = new RollReadyWatch();
+let savedRuns = loadRuns();
+let speedUnit = localStorage.getItem(UNIT_KEY) === "mph" ? "mph" : "km/h";
+let lastKmh = 0;
+let historyCar = null;
+let shownSession = null;
+let shownRun = savedRuns.length - 1;
+let summaryPending = false;
+let standingOutcome = null;
+const callouts = new SpeedCallouts(CALLOUT_SPEEDS_KMH);
+const distanceCallouts = new SpeedCallouts(DISTANCE_CALLOUTS_M);
+let liveDistanceM = 0;
+let lastDistanceFixMs = null;
+const gpsHealth = new GpsHealth();
+let gpsRestarts = 0;
+let motionListening = false;
+let motionListenStart = 0;
+let lastMotionRetry = 0;
+let watchId = null;
+let lastFixAt = 0;
+let lastFix = null;
+let lastUsableMs = 0;
+let motionSinceReport = 0;
+let motionWindowStart = Date.now();
+let lastHealthFlush = Date.now();
+
+function newSessionId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+const remoteLog = new RemoteLog({
+  send: async (body, keepalive) => {
+    const response = await fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      keepalive,
+    });
+    return response.ok;
+  },
+  storage: localStorage,
+  now: () => Date.now(),
+  session: newSessionId(), // Random per visit. Not tied to a person or device.
+  version: APP_VERSION,
+  device: navigator.userAgent,
+});
+
+async function flushLogs(options) {
+  const outcome = await remoteLog.flush(options);
+  if (outcome === "sent") el("shareStatus").textContent = "Diagnostics sent";
+  if (outcome === "failed") el("shareStatus").textContent = "Couldn't send diagnostics. Will retry later.";
+}
+
+function setShare(enabled, { userChanged = true } = {}) {
+  remoteLog.setEnabled(enabled);
+  localStorage.setItem(SHARE_KEY, enabled ? "1" : "0");
+  el("share").checked = enabled;
+  el("shareStatus").textContent = enabled ? "Sharing is on" : "";
+  // Only a real change is worth a submission. Reloading the page isn't.
+  if (enabled && userChanged) {
+    remoteLog.log("share_on");
+    flushLogs();
+  }
+}
+
+function setStatus(text, state) {
+  const status = el("status");
+  if (status.textContent !== text) remoteLog.log("status", { text });
+  status.textContent = text;
+  status.dataset.state = state;
+}
+
+function updateStatus(timeMs, kmh, quiet) {
+  // Ready must mean the phone itself is still, or calibration will be poor.
+  const stopped = kmh < STILL_KMH && (quiet || !hasRecentMotion(motionLog, Date.now()));
+  stillSince = stopped ? (stillSince === null ? timeMs : stillSince) : null;
+  showUpdateIfIdle();
+  if (!timer.armed) setStatus("Stop to arm", "wait");
+  else if (timer.startMs !== null) setStatus("Running", "running");
+  else if (stillSince !== null && timeMs - stillSince >= READY_AFTER_MS) {
+    // Spoken so the driver doesn't have to watch the screen before launching.
+    if (el("status").textContent !== "Ready" && el("voice").checked) speak("Ready");
+    setStatus("Ready", "ready");
+  }
+  else setStatus("Calibrating", "wait");
+}
+
+function trackRun(timeMs, kmh) {
+  if (timer.startMs !== null && (!currentRun || currentRun.approxLaunchMs !== timer.startMs)) {
+    currentRun = { approxLaunchMs: timer.startMs, source: timer.startSource, peak: 0, done: false };
+  }
+  if (!currentRun || currentRun.done) return;
+  currentRun.peak = Math.max(currentRun.peak, kmh);
+  const over = kmh < STILL_KMH || kmh < currentRun.peak - RUN_OVER_DROP_KMH;
+  if (currentRun.peak >= MIN_RUN_PEAK_KMH && over) {
+    currentRun.done = true;
+    finishRun(currentRun);
+  }
+}
+
+function loadRuns() {
+  return loadStoredRuns(localStorage, RUNS_KEY);
+}
+
+const cleanName = (id) => el(id).value.trim() || null;
+
+function commitRuns(runs) {
+  const outcome = storeRuns(localStorage, RUNS_KEY, runs);
+  savedRuns = outcome.runs;
+  shownRun = Math.min(shownRun, savedRuns.length - 1);
+  showRunsStatus(outcome);
+  return outcome;
+}
+
+function showRunsStatus({ saved = true, droppedRuns = 0, droppedTraces = 0 } = {}) {
+  const count = `${savedRuns.length} run${savedRuns.length === 1 ? "" : "s"} saved on this phone.`;
+  if (!saved) el("runsStatus").textContent = "Couldn't save to this phone because its storage is full. Download a backup before closing RacePS.";
+  else if (droppedRuns) el("runsStatus").textContent = `${count} The oldest were removed to make room.`;
+  else if (droppedTraces) el("runsStatus").textContent = `${count} Some older speed traces were removed to make room, but their times are kept.`;
+  else el("runsStatus").textContent = count;
+}
+
+// Built with text nodes, because saved runs can come from a restored file.
+function node(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+const speedText = (kmh) => `${speedInUnit(kmh, speedUnit).toFixed(0)} ${speedUnit}`;
+const shortDate = (at) => new Date(at).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+const shortTime = (at) => new Date(at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+const KNOWN_GRADES = ["good", "fair", "rejected"];
+
+function gradeElement(quality) {
+  const grade = node("span", "grade", quality);
+  if (KNOWN_GRADES.includes(quality)) grade.classList.add(quality);
+  return grade;
+}
+
+// The Run screen shows one time and why it can or can't be trusted. The summary has the rest.
+function showCompactRun(run, quality, lines) {
+  const headline = headlineOf(run);
+  const rows = headline
+    ? [summaryRow(headline.label, `${headline.seconds.toFixed(2)} s`, Number.isFinite(headline.plusMinus) ? `±${headline.plusMinus.toFixed(2)}` : "")]
+    : [node("p", "note", "No target speed reached")];
+  const note = node("p", "note");
+  if (quality !== "rolling") note.append(gradeElement(quality), " ");
+  if (lines.length) note.append(`${lines.join(". ")}.`);
+  el("final").replaceChildren(...rows, note);
+}
+
+function showSavedRun(run) {
+  const splitsNote = run.type === "standing" || !run.splits.length ? [] : ["Splits are the time between those speeds only"];
+  showCompactRun(run, run.quality, [runTitle(run), ...run.notes, ...splitsNote]);
+}
+
+// Comes from saved runs, so it survives a reload and follows the latest session.
+function showMedians() {
+  const [latest] = sessionSummaries(savedRuns, HEADLINE_LABELS);
+  el("median").hidden = !latest;
+  if (!latest) return;
+  const left = node("span");
+  left.append(node("span", "label", "Latest session"), node("strong", "", `${latest.car || "No car recorded"}, ${plural(latest.runCount, "run")}`));
+  const right = node("span", "figure");
+  if (latest.headline) right.append(node("span", "time", `${latest.headline.seconds.toFixed(2)} s`), node("small", "", `median ${latest.headline.label}`));
+  el("median").replaceChildren(left, right);
+  el("median").dataset.session = latest.sessionId;
+}
+
+function showRuns() {
+  shownRun = savedRuns.length - 1;
+  el("viewSummary").hidden = savedRuns.length === 0;
+  if (savedRuns.length) showSavedRun(savedRuns[shownRun]);
+  else el("final").replaceChildren(node("p", "note", "No runs yet"));
+  showMedians();
+  showHistory();
+}
+
+function showView(name) {
+  for (const view of ["Run", "History", "Settings"]) el(`view${view}`).hidden = view !== name;
+  for (const tab of document.querySelectorAll("#tabs button")) {
+    if (tab.dataset.view === name) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  }
+  window.scrollTo(0, 0);
+}
+
+function closeOverlays() {
+  el("summary").hidden = true;
+  el("sessionView").hidden = true;
+}
+
+// While moving, the screen shrinks to speed and status. Anything else would invite a glance
+// away from the road. The gap between the two thresholds stops GPS jitter flipping the layout.
+function updateMoving(kmh) {
+  const moving = document.body.dataset.moving === "true";
+  if (!moving && kmh >= MOVING_KMH) {
+    document.body.dataset.moving = "true";
+    closeOverlays();
+    showView("Run");
+  } else if (moving && kmh < STILL_KMH) {
+    document.body.dataset.moving = "false";
+  }
+}
+
+function setStarted(started) {
+  document.body.dataset.started = String(started);
+  el("start").disabled = started;
+}
+
+function setMotion(detail, short) {
+  el("motion").textContent = detail;
+  el("tileMotion").textContent = short;
+}
+
+function showLiveTimes() {
+  const running = timer.startMs !== null;
+  const current = running && timer.resultsStartMs === timer.startMs ? timer.results.slice(-2) : [];
+  el("liveTitle").hidden = current.length === 0;
+  el("liveNote").hidden = !running;
+  el("liveRows").replaceChildren(...current.map((r) => {
+    const row = node("div", "liveRow");
+    row.append(node("span", "", r.label), node("span", "", `${r.seconds.toFixed(1)} s`));
+    return row;
+  }));
+}
+
+function setUnit(unit) {
+  speedUnit = unit;
+  localStorage.setItem(UNIT_KEY, unit);
+  el("speedUnit").textContent = unit;
+  el("speed").textContent = speedInUnit(lastKmh, unit).toFixed(0);
+  el("unitKmh").setAttribute("aria-pressed", String(unit === "km/h"));
+  el("unitMph").setAttribute("aria-pressed", String(unit === "mph"));
+  if (savedRuns.length) showSavedRun(savedRuns[savedRuns.length - 1]);
+}
+
+function showVoiceQuick() {
+  el("voiceQuick").textContent = el("voice").checked ? "Voice callouts on" : "Voice callouts off";
+  el("voiceQuick").setAttribute("aria-pressed", String(el("voice").checked));
+}
+
+function showHistory() {
+  const cars = carsIn(savedRuns);
+  if (historyCar !== null && !cars.includes(historyCar)) historyCar = null;
+  el("carFilters").hidden = cars.length < 2;
+  el("carFilters").replaceChildren(...[null, ...cars].map((car) => {
+    const chip = node("button", "chip", car || "All cars");
+    chip.setAttribute("aria-pressed", String(car === historyCar));
+    chip.onclick = () => { historyCar = car; showHistory(); };
+    return chip;
+  }));
+  const shown = sessionSummaries(savedRuns, HEADLINE_LABELS).filter((s) => historyCar === null || s.car === historyCar);
+  el("sessions").replaceChildren(...(shown.length ? shown.map(sessionRow) : [node("p", "note", "No runs yet. Your sessions will appear here after your first run.")]));
+  el("historyCount").textContent = `${savedRuns.length} of ${RUN_STORE_MAX} runs saved on this phone`;
+}
+
+function sessionRow(session) {
+  const row = node("button", "sessionRow");
+  const left = node("span");
+  left.append(
+    node("strong", "", session.car || "No car recorded"),
+    node("small", "", `${shortDate(session.startAt)}, ${plural(session.runCount, "run")}`),
+  );
+  const right = node("span", "right");
+  if (session.headline) {
+    left.append(node("small", "", `Best ${session.headline.best.toFixed(2)} s`));
+    const figure = node("span", "figure");
+    figure.append(node("span", "time", `${session.headline.seconds.toFixed(2)} s`), node("small", "", `median ${session.headline.label}`));
+    right.append(figure);
+  }
+  right.insertAdjacentHTML("beforeend", '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>');
+  row.append(left, right);
+  row.onclick = () => openSession(session.sessionId);
+  return row;
+}
+
+function shortRunTitle(run) {
+  if (run.type === "standing") return "Standing start";
+  if (run.type === "roll") return run.roll.name;
+  if (run.type === "from") return `From ${speedText(run.fromKmh)}`;
+  return run.fromKmh < STILL_KMH ? "Launch not timed" : `Rolling from ${speedText(run.fromKmh)}`;
+}
+
+function openSession(sessionId) {
+  const runs = runsInSession(savedRuns, sessionId);
+  if (!runs.length) {
+    el("sessionView").hidden = true;
+    return;
+  }
+  shownSession = sessionId;
+  const counted = runs.filter((run) => !run.excluded).length;
+  el("sessionCar").textContent = runs.map((run) => run.car).filter(Boolean).pop() || "No car recorded";
+  el("sessionMeta").textContent = `${shortDate(runs[0].at)}, ${shortTime(runs[0].at)} to ${shortTime(runs[runs.length - 1].at)}. ${plural(runs.length, "run")}, ${counted} counted.`;
+  const medians = medianByLabel(runs, SESSION_LABELS);
+  el("sessionMedians").replaceChildren(...(medians.length
+    ? medians.map((m) => summaryRow(m.label, `${m.seconds.toFixed(2)} s`, `best ${m.best.toFixed(2)} s, ${plural(m.runs, "run")}`))
+    : [node("p", "note", "No counted runs have comparable times yet.")]));
+  el("sessionRuns").replaceChildren(...runs.map((run, i) => sessionRunRow(run, i)));
+  el("deleteSession").hidden = false;
+  el("deleteConfirm").hidden = true;
+  el("sessionView").hidden = false;
+  el("sessionView").scrollTop = 0;
+}
+
+function sessionRunRow(run, index) {
+  const row = node("div", "runRow");
+  const open = node("button", "runOpen");
+  open.append(node("strong", "", `${index + 1}. ${shortRunTitle(run)}`));
+  if (run.excluded) open.append(node("span", "grade out", "Not counted"));
+  else if (run.quality !== "rolling") open.append(gradeElement(run.quality));
+  const headline = headlineOf(run);
+  open.append(node("small", "", [shortTime(run.at), headline && `${headline.label} ${headline.seconds.toFixed(2)} s`].filter(Boolean).join(", ")));
+  open.onclick = () => {
+    shownRun = savedRuns.indexOf(run);
+    openSummary();
+  };
+  const toggle = node("button", "runToggle", run.excluded ? "Include" : "Exclude");
+  toggle.setAttribute("aria-label", `${run.excluded ? "Include" : "Exclude"} run ${index + 1}`);
+  toggle.onclick = () => {
+    const scroll = el("sessionView").scrollTop;
+    commitRuns(setRunExcluded(savedRuns, run.at, !run.excluded));
+    showRuns();
+    openSession(run.sessionId);
+    el("sessionView").scrollTop = scroll;
+  };
+  row.append(open, toggle);
+  return row;
+}
+
+function askDeleteSession() {
+  const count = runsInSession(savedRuns, shownSession).length;
+  el("deleteMessage").textContent = `Delete ${plural(count, "run")} from this phone? You can only get them back from a backup.`;
+  el("deleteSession").hidden = true;
+  el("deleteConfirm").hidden = false;
+  el("deleteConfirm").scrollIntoView({ block: "center" });
+}
+
+function deleteShownSession() {
+  commitRuns(removeSession(savedRuns, shownSession));
+  showRuns();
+  el("sessionView").hidden = true;
+}
+
+function downloadBackup() {
+  const blob = new Blob([backupText(savedRuns, Date.now(), APP_VERSION)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `raceps-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function restoreBackup(file) {
+  const merged = mergeBackup(await file.text(), savedRuns);
+  if (!merged) {
+    el("runsStatus").textContent = "That file isn't a RacePS backup, so nothing was changed.";
+    return;
+  }
+  commitRuns(merged);
+  showRuns();
+}
+
+// The speed the clock starts from, or null for Auto.
+function timingFrom() {
+  const kmh = Number(localStorage.getItem(MODE_KEY));
+  return MODE_SPEEDS_KMH.includes(kmh) ? kmh : null;
+}
+
+function showMode() {
+  const kmh = timingFrom();
+  el("timingMode").value = kmh === null ? "" : String(kmh);
+  el("modeNote").textContent = kmh === null ? "" : `Timing from ${kmh} km/h. Change this in Settings.`;
+  el("modeNote").hidden = kmh === null;
+}
+
+// A run in a from-speed mode: times start when the climb passes that speed.
+function fromRecord(gps, pull, nowMs, splits, startKmh) {
+  const speeds = findFromTimes(gps, pull, startKmh);
+  if (!speeds.length) return null;
+  return {
+    at: nowMs,
+    version: APP_VERSION,
+    type: "from",
+    quality: "rolling",
+    roll: null,
+    notes: [],
+    launchIssue: null,
+    fromKmh: startKmh,
+    peakKmh: pull.peakKmh,
+    speeds,
+    // A split with the same name as a time would be counted twice.
+    splits: splits.filter((split) => !speeds.some((t) => t.label === split.label)),
+    distances: [],
+  };
+}
+
+// Runs one each time the driver lifts off, whether or not the run began from a stop.
+function finishPull(pull, nowMs) {
+  const gps = samples.filter((s) => s.source !== "position").map((s) => ({ t: s.time, kmh: s.kmh }));
+  const { fromKmh, splits } = findSplits(gps, pull, SPLITS);
+  const modeKmh = timingFrom();
+  if (modeKmh !== null) {
+    standingOutcome = null;
+    const record = fromRecord(gps, pull, nowMs, splits, modeKmh);
+    if (record) saveRun(record, pull, pull.startMs, nowMs);
+    return;
+  }
+  const roll = findRoll(gps, motionLog, pull);
+  const outcome = standingOutcome;
+  standingOutcome = null;
+  const type = chooseRunType({ outcome, roll, pullStartMs: pull.startMs });
+  const standing = type === "standing";
+  const isRoll = type === "roll";
+  // A roll isn't meant to be timed from a stop, so saying it wasn't would only confuse.
+  const launchIssue = standing || isRoll ? null : ((outcome && outcome.reasons[0]) || "launch not detected");
+  const record = {
+    at: nowMs,
+    version: APP_VERSION,
+    type,
+    quality: standing ? outcome.quality : (isRoll ? roll.quality : "rolling"),
+    roll: !isRoll ? null : { name: roll.name, standard: roll.standard, heldKmh: roll.heldKmh, goSource: roll.goSource, holdSeconds: roll.holdSeconds },
+    notes: standing ? outcome.reasons : (isRoll ? roll.reasons : (outcome && outcome.reasons[0] ? [`Not timed from a stop: ${outcome.reasons[0]}`] : [])),
+    // Kept for diagnosis, so a pull from a stop shows why it got no 0-to-speed times.
+    launchIssue,
+    fromKmh: standing ? 0 : fromKmh,
+    peakKmh: pull.peakKmh,
+    speeds: standing ? outcome.targets : (isRoll ? roll.times : []),
+    splits,
+    distances: standing ? outcome.distances : [],
+  };
+  if (!standing && !record.speeds.length && !splits.length) return; // Nothing comparable to show.
+  // GPS speed arrives late, so a timed run's trace shifts by the delay the analysis found.
+  saveRun(record, pull, standing ? outcome.launchMs + outcome.delayMs : pull.startMs, nowMs);
+}
+
+function saveRun(record, pull, traceStart, nowMs) {
+  const standing = record.type === "standing";
+  const car = cleanName("car");
+  commitRuns([...savedRuns, {
+    ...record,
+    schema: RUN_SCHEMA,
+    sessionId: sessionIdFor(savedRuns, nowMs, car, newSessionId),
+    driver: cleanName("driver"),
+    car,
+    trace: encodeTrace(runData(traceStart - 3000, pull.peakMs + 3000).gps, traceStart),
+  }]);
+  showRuns();
+  summaryPending = true;
+  remoteLog.log("run_summary", diagnosticsRecord(record));
+  if (!standing) {
+    remoteLog.log("rolling_raw", { raw: compactRun({ ...runData(pull.startMs - 3000, pull.peakMs + 3000), launchMs: pull.startMs }) });
+  }
+  flushLogs();
+  if (el("voice").checked) speak("Run saved");
+}
+
+// Opens only once stopped, so the card can't distract a driver who is still moving.
+function openSummaryWhenStopped(kmh) {
+  if (summaryPending && kmh < STILL_KMH) {
+    summaryPending = false;
+    openSummary();
+  }
+}
+
+function summaryRow(label, value, detail) {
+  const row = document.createElement("div");
+  row.className = "row";
+  const name = document.createElement("span");
+  name.textContent = label;
+  if (detail) {
+    const extra = document.createElement("small");
+    extra.className = "trap";
+    extra.textContent = ` ${detail}`;
+    name.append(extra);
+  }
+  const time = document.createElement("span");
+  time.className = "time";
+  time.textContent = value;
+  row.append(name, time);
+  return row;
+}
+
+function summaryGroups(run) {
+  const timed = (t) => [t.label, `${t.seconds.toFixed(2)} s`, `±${t.plusMinus.toFixed(2)}`];
+  return [
+    [run.type === "roll" ? "Roll, timed from the go moment" : (run.type === "from" ? `Timed from ${speedText(run.fromKmh)}` : "From a stop"), run.speeds.map(timed)],
+    ["Splits: time between these speeds only", run.splits.map(timed)],
+    ["Distance", run.distances.map((d) => [d.label, `${d.seconds.toFixed(2)} s`, `${speedText(d.trapKmh)}${d.liftedOff ? ", lifted" : ""}`])],
+  ].filter(([, rows]) => rows.length);
+}
+
+// Describes the whole pull, not the splits. A pull from a stop is never called rolling: it
+// just couldn't be timed from the launch.
+function pullTitle(fromKmh, peakKmh) {
+  const peak = `peak ${speedText(peakKmh)}`;
+  return fromKmh < STILL_KMH
+    ? `Pulled away from a stop, launch not timed, ${peak}`
+    : `Rolling run from ${speedText(fromKmh)}, ${peak}`;
+}
+
+function runTitle(run) {
+  if (run.type === "roll") {
+    return `${run.roll.name}, held ${speedText(run.roll.heldKmh)}, peak ${speedText(run.peakKmh)}`;
+  }
+  if (run.type === "from") return `Timed from ${speedText(run.fromKmh)}, peak ${speedText(run.peakKmh)}`;
+  return run.type === "standing"
+    ? `Standing start, peak ${speedText(run.peakKmh)}`
+    : pullTitle(run.fromKmh, run.peakKmh);
+}
+
+// Where a run sits within its session, for the summary's position and arrows.
+function runPosition(run) {
+  const session = runsInSession(savedRuns, run.sessionId);
+  return { session, index: session.findIndex((r) => r.at === run.at) };
+}
+
+function stepRun(step) {
+  const { session, index } = runPosition(savedRuns[shownRun]);
+  shownRun = savedRuns.findIndex((r) => r.at === session[index + step].at);
+  openSummary();
+  el("summary").scrollTop = 0;
+}
+
+function runMarker(run) {
+  const headline = headlineOf(run);
+  const target = run.type === "standing" && headline ? TARGETS.find((t) => t.label === headline.label) : null;
+  return target ? { t: headline.seconds, v: speedInUnit(target.kmh, speedUnit), label: `${headline.label}, ${headline.seconds.toFixed(2)} s` } : null;
+}
+
+function svgNode(tag, attrs, text) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [name, value] of Object.entries(attrs)) element.setAttribute(name, value);
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function drawChart(chart, marker) {
+  const [width, height, left, top, right, bottom] = [326, 170, 34, 8, 8, 24];
+  const x = (t) => left + (t / chart.tMax) * (width - left - right);
+  const y = (v) => top + (1 - v / chart.vMax) * (height - top - bottom);
+  const svg = svgNode("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": `Speed over time, peaking at ${Math.max(...chart.points.map((p) => p.v)).toFixed(0)} ${speedUnit}` });
+  for (const v of chart.vTicks) {
+    svg.append(
+      svgNode("line", { x1: left, x2: width - right, y1: y(v), y2: y(v), stroke: "var(--line)", "stroke-dasharray": v ? "3 4" : "" }),
+      svgNode("text", { x: left - 6, y: y(v) + 4, fill: "var(--muted)", "font-size": 11, "text-anchor": "end" }, String(v)),
+    );
+  }
+  for (const t of chart.tTicks) {
+    svg.append(svgNode("text", { x: x(t), y: height - 6, fill: "var(--muted)", "font-size": 11, "text-anchor": "middle" }, `${t} s`));
+  }
+  svg.append(svgNode("polyline", {
+    fill: "none", stroke: "var(--accent)", "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round",
+    points: chart.points.map((p) => `${x(p.t).toFixed(1)},${y(p.v).toFixed(1)}`).join(" "),
+  }));
+  if (marker) {
+    svg.append(
+      svgNode("circle", { cx: x(marker.t), cy: y(marker.v), r: 4.5, fill: "var(--text)", stroke: "var(--bg)", "stroke-width": 2 }),
+      svgNode("text", { x: x(marker.t) + 9, y: y(marker.v) + 17, fill: "var(--text)", "font-size": 12, "font-weight": 700 }, marker.label),
+    );
+  }
+  return svg;
+}
+
+function openSummary() {
+  if (!savedRuns.length) return;
+  const run = savedRuns[shownRun];
+  const { session, index } = runPosition(run);
+  const when = new Date(run.at).toLocaleString();
+  const headline = headlineOf(run);
+  const position = `Run ${index + 1} of ${session.length}`;
+  el("cardPosition").textContent = position;
+  el("cardHeroLabel").textContent = headline ? headline.label : "No target speed reached";
+  el("cardGrade").hidden = run.quality === "rolling";
+  el("cardGrade").textContent = run.quality;
+  el("cardGrade").className = KNOWN_GRADES.includes(run.quality) ? `grade ${run.quality}` : "grade";
+  el("cardHeroTime").replaceChildren(...(headline ? [
+    node("b", "", headline.seconds.toFixed(2)),
+    node("span", "", "s"),
+    ...(Number.isFinite(headline.plusMinus) ? [node("small", "", `±${headline.plusMinus.toFixed(2)}`)] : []),
+  ] : []));
+  const compared = comparedToSession(run, savedRuns);
+  el("cardCompare").hidden = !compared;
+  if (compared) {
+    const gap = Math.abs(compared.difference);
+    const median = `this session's median of ${compared.median.toFixed(2)} s`;
+    el("cardCompare").textContent = gap < 0.005 ? `Level with ${median}.` : `${gap.toFixed(2)} s ${compared.difference < 0 ? "quicker" : "slower"} than ${median}.`;
+  }
+  el("cardDriver").textContent = [run.driver, run.car].filter(Boolean).join(" · ");
+  el("cardMeta").textContent = `${when} · ${position}`;
+  el("cardType").textContent = runTitle(run);
+  const chart = speedChart(run, speedUnit);
+  el("cardChartPanel").hidden = false;
+  el("cardChart").replaceChildren(chart
+    ? drawChart(chart, runMarker(run))
+    : node("p", "note", "No speed graph for this run. Graphs start with runs saved in version 0.11."));
+  const body = el("cardBody");
+  body.replaceChildren();
+  for (const [title, rows] of summaryGroups(run)) {
+    const group = node("section", "panel");
+    group.append(node("h3", "", title), ...rows.map((r) => summaryRow(r[0], r[1], r[2])));
+    body.append(group);
+  }
+  const grade = run.quality === "rolling" ? [] : [`Grade: ${run.quality}`];
+  const excluded = run.excluded ? ["Not counted in this session's medians"] : [];
+  el("cardNotes").textContent = [...grade, ...excluded, ...run.notes].join(". ");
+  el("runPrev").disabled = index === 0;
+  el("runNext").disabled = index === session.length - 1;
+  el("summary").hidden = false;
+}
+
+// Splits text to fit a width. The caller sets the font first.
+function wrapText(c, text, maxWidth) {
+  const lines = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && c.measureText(next).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// Draws the card as an image, so it can be sent without a screenshot. It's separate from the
+// on-screen card, so changes to one need making in the other.
+function cardImage() {
+  const run = savedRuns[shownRun];
+  const groups = summaryGroups(run);
+  const headline = headlineOf(run);
+  const chart = speedChart(run, speedUnit);
+  const rowCount = groups.reduce((n, [, rows]) => n + rows.length + 1, 0);
+  const width = 1080;
+  const textWidth = width - 120;
+  const font = (size, weight = 500) => `${weight} ${size}px -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const notes = `Phone GPS estimate. Compare runs made with RacePS, in similar conditions. ${el("cardNotes").textContent}`.trim();
+  const canvas = document.createElement("canvas");
+  let c = canvas.getContext("2d");
+  c.font = font(26);
+  const noteLines = wrapText(c, notes, textWidth);
+  c.font = font(32);
+  const titleLines = wrapText(c, el("cardType").textContent, textWidth);
+  canvas.width = width;
+  const headlineHeight = headline ? 190 : 0;
+  const chartHeight = chart ? 440 : 0;
+  canvas.height = 240 + titleLines.length * 44 + headlineHeight + chartHeight + rowCount * 84 + noteLines.length * 36 + 40;
+  c = canvas.getContext("2d");
+  c.fillStyle = "#0b0d10";
+  c.fillRect(0, 0, width, canvas.height);
+  c.font = `italic ${font(68, 800)}`;
+  c.fillStyle = "#f4f5f7";
+  c.fillText("Race", 60, 100);
+  const logo = c.measureText("Race").width;
+  c.fillStyle = "#ff5a1f";
+  c.fillText("PS", 60 + logo, 100);
+  c.fillStyle = "#f4f5f7";
+  c.font = font(40, 700);
+  c.fillText(el("cardDriver").textContent, 60, 170);
+  c.fillStyle = "#a0a6b1";
+  c.font = font(32);
+  c.fillText(el("cardMeta").textContent, 60, 220);
+  c.fillStyle = "#f4f5f7";
+  let y = 270;
+  for (const line of titleLines) {
+    c.fillText(line, 60, y);
+    y += 44;
+  }
+  if (headline) {
+    y += 30;
+    c.fillStyle = "#a0a6b1";
+    c.font = font(34, 600);
+    c.fillText(headline.label, 60, y);
+    if (run.quality !== "rolling") {
+      c.fillStyle = { good: "#3ddc84", fair: "#ffc247", rejected: "#ff6b6b" }[run.quality] || "#a0a6b1";
+      c.textAlign = "right";
+      c.fillText(run.quality.toUpperCase(), width - 60, y);
+      c.textAlign = "left";
+    }
+    y += 110;
+    c.fillStyle = "#f4f5f7";
+    c.font = font(112, 800);
+    const time = `${headline.seconds.toFixed(2)} s`;
+    c.fillText(time, 60, y);
+    if (Number.isFinite(headline.plusMinus)) {
+      const timeWidth = c.measureText(time).width;
+      c.fillStyle = "#a0a6b1";
+      c.font = font(38);
+      c.fillText(`±${headline.plusMinus.toFixed(2)}`, 60 + timeWidth + 24, y);
+    }
+    y += 50;
+  }
+  if (chart) {
+    const [left, top, plotWidth, plotHeight] = [130, y + 50, width - 190, 300];
+    const px = (t) => left + (t / chart.tMax) * plotWidth;
+    const py = (v) => top + (1 - v / chart.vMax) * plotHeight;
+    c.font = font(26);
+    c.fillStyle = "#a0a6b1";
+    c.strokeStyle = "#272b33";
+    c.lineWidth = 2;
+    c.textAlign = "right";
+    for (const v of chart.vTicks) {
+      c.beginPath();
+      c.moveTo(left, py(v));
+      c.lineTo(left + plotWidth, py(v));
+      c.stroke();
+      c.fillText(String(v), left - 14, py(v) + 9);
+    }
+    c.textAlign = "center";
+    for (const t of chart.tTicks) c.fillText(`${t} s`, px(t), top + plotHeight + 38);
+    c.textAlign = "left";
+    c.fillText(`Speed over time, ${speedUnit}`, 60, top - 26);
+    c.strokeStyle = "#ff5a1f";
+    c.lineWidth = 6;
+    c.lineJoin = "round";
+    c.beginPath();
+    chart.points.forEach((p, i) => (i ? c.lineTo(px(p.t), py(p.v)) : c.moveTo(px(p.t), py(p.v))));
+    c.stroke();
+    const marker = runMarker(run);
+    if (marker) {
+      c.fillStyle = "#f4f5f7";
+      c.beginPath();
+      c.arc(px(marker.t), py(marker.v), 11, 0, Math.PI * 2);
+      c.fill();
+    }
+    y += chartHeight;
+  }
+  y += 10;
+  for (const [title, rows] of groups) {
+    c.fillStyle = "#ff5a1f";
+    c.font = font(30, 700);
+    c.fillText(title.toUpperCase(), 60, y);
+    y += 84;
+    for (const [label, value, detail] of rows) {
+      c.fillStyle = "#f4f5f7";
+      c.font = font(38);
+      c.textAlign = "left";
+      c.fillText(label, 60, y);
+      const labelWidth = c.measureText(label).width;
+      c.fillStyle = "#a0a6b1";
+      c.font = font(28);
+      c.fillText(detail || "", 60 + labelWidth + 24, y);
+      c.fillStyle = "#f4f5f7";
+      c.font = font(54, 800);
+      c.textAlign = "right";
+      c.fillText(value, width - 60, y);
+      c.textAlign = "left";
+      y += 84;
+    }
+  }
+  c.fillStyle = "#a0a6b1";
+  c.font = font(26);
+  for (const line of noteLines) {
+    c.fillText(line, 60, y);
+    y += 36;
+  }
+  return canvas;
+}
+
+async function shareCard() {
+  const blob = await new Promise((resolve) => cardImage().toBlob(resolve, "image/png"));
+  const file = new File([blob], "raceps-run.png", { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({ files: [file], title: "RacePS run" }).catch(() => {});
+    return;
+  }
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = file.name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function runData(from, to) {
+  return {
+    motion: motionLog.filter((s) => s.t >= from && s.t <= to),
+    // Position-derived speed is too noisy for final timing, so it never reaches the analysis.
+    gps: samples.filter((s) => s.time >= from && s.time <= to && s.source !== "position")
+      .map((s) => ({ t: s.time, kmh: s.kmh, accuracy: s.accuracy })),
+  };
+}
+
+function finishRun(run) {
+  // A live GPS start still gets a search of the motion data. GPS covers it if that finds nothing.
+  const gentle = run.source === "motion" ? null : findGentleLaunch(
+    motionLog,
+    runData(run.approxLaunchMs - FAILED_RUN_HISTORY_MS, run.approxLaunchMs).gps,
+    run.approxLaunchMs,
+  );
+  const approxLaunchMs = gentle ? gentle.launchMs : run.approxLaunchMs;
+  const anchor = approxLaunchMs !== null ? approxLaunchMs : run.approxLaunchMs;
+  const { motion, gps } = runData(anchor - FAILED_RUN_HISTORY_MS, anchor + RUN_WINDOW_MS);
+  const result = analyzeRun({
+    motion,
+    gps,
+    approxLaunchMs,
+    gpsStartMs: run.approxLaunchMs,
+    targets: TARGETS,
+    distanceTargets: DISTANCE_TARGETS,
+  });
+  finishedRuns.push(result);
+  standingOutcome = result;
+  showResult(result);
+  remoteLog.log("run", {
+    result,
+    liveStart: run.source,
+    gentleReason: gentle ? gentle.reason : null,
+    raw: compactRun({ motion, gps, launchMs: anchor }),
+  });
+  flushLogs();
+}
+
+function showResult(result) {
+  if (result.quality === "rejected") {
+    const note = node("p", "note");
+    note.append(gradeElement(result.quality), ` ${result.reasons[0]}`);
+    el("final").replaceChildren(note);
+    return;
+  }
+  showCompactRun({ type: "standing", speeds: result.targets, splits: [], distances: result.distances }, result.quality, result.reasons);
+  el("delay").textContent = `${result.delayMs} ms`;
+}
+
+function onPosition(position) {
+  const { speed, accuracy, latitude, longitude } = position.coords;
+  const time = position.timestamp;
+  const now = Date.now();
+  lastFixAt = now;
+  gpsRestarts = 0;
+  const speedMissing = speed === null || speed < 0;
+  if (!gpsHealth.record({ t: time, now, speedMissing })) return;
+  hideAlert();
+
+  el("accuracy").textContent = `${accuracy.toFixed(0)} m`;
+  el("tileAccuracy").textContent = `${accuracy.toFixed(0)} m`;
+  const health = gpsHealth.summary();
+  el("rate").textContent = `${health.hz} Hz, ${health.missingSpeedPct}% no speed`;
+  el("tileRate").textContent = `${health.hz} Hz`;
+
+  const fix = { t: time, lat: latitude, lon: longitude, accuracy, speedMs: speed };
+  const quiet = motionIsQuiet(motionLog, now);
+  const resolved = resolveSpeed(fix, lastFix, quiet);
+  lastFix = fix;
+  if (resolved.source === "none") {
+    if (time - lastUsableMs > WAITING_AFTER_MS) {
+      stillSince = null;
+      setStatus("Waiting for GPS", "wait");
+    }
+    return;
+  }
+  lastUsableMs = time;
+  const kmh = resolved.kmh;
+  lastKmh = kmh;
+  updateMoving(kmh);
+  samples.push({ time, kmh, accuracy, latitude, longitude, source: resolved.source });
+  timer.onSpeed(time, kmh);
+  trackRun(time, kmh);
+  const pull = pullTracker.update(time, kmh);
+  if (pull) finishPull(pull, now);
+  openSummaryWhenStopped(kmh);
+  // Position-derived speed is too noisy to announce.
+  if (resolved.source === "gps") {
+    announce(callouts.update(kmh, timer.startMs));
+    announceDistance(time, kmh);
+    // Also runs after pulling away from a stop, which is how most rolls begin.
+    const rollReady = rollReadyWatch.update(time, kmh);
+    if (rollReady !== null && el("voice").checked) speak(`${spokenNumber(rollReady)} roll. Ready.`);
+  }
+
+  el("speed").textContent = speedInUnit(kmh, speedUnit).toFixed(0);
+  updateStatus(time, kmh, quiet);
+  if (timer.results.length) {
+    el("results").textContent = timer.results.map((r) => `${r.label} ${r.seconds.toFixed(1)} s`).join(", ")
+      + (timer.results[0].source === "gps" ? " (GPS start)" : "");
+  }
+  showLiveTimes();
+  el("export").disabled = false;
+}
+
+function onMotion(event) {
+  const raw = event.accelerationIncludingGravity;
+  if (raw && raw.x !== null) {
+    motionLog.push({ t: Date.now(), x: raw.x, y: raw.y, z: raw.z, interval: event.interval });
+    motionSinceReport++;
+    if (motionLog.length > MAX_MOTION_LOG) motionLog.splice(0, 1000);
+  }
+  const a = event.acceleration;
+  let magnitude;
+  if (a && a.x !== null) {
+    magnitude = Math.hypot(a.x, a.y, a.z);
+  } else if (raw && raw.x !== null) {
+    magnitude = Math.abs(Math.hypot(raw.x, raw.y, raw.z) - 9.81);
+  } else {
+    return;
+  }
+  setMotion("Active", "Active");
+  el("motionWarn").hidden = true;
+  if (!motionSeen) {
+    motionSeen = true;
+    remoteLog.log("motion_active", { interval: event.interval });
+  }
+  timer.onMotion(Date.now(), magnitude);
+}
+
+function chosenVoice() {
+  const usable = speechSynthesis.getVoices().filter((v) => !failedVoices.has(v.name));
+  return pickVoice(usable, localStorage.getItem(VOICE_NAME_KEY), navigator.language);
+}
+
+// Voices that failed on this phone are skipped, so a bad choice can't silence every callout.
+const failedVoices = new Set();
+let speechReported = false;
+
+function reportSpeech(kind, detail) {
+  // One report per visit is enough to diagnose, and keeps logs small.
+  if (speechReported) return;
+  speechReported = true;
+  remoteLog.log("speech_problem", { kind, ...detail, ...audioState() });
+  flushLogs();
+}
+
+function speakNow(text, useChosenVoice) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voice = useChosenVoice ? chosenVoice() : null;
+  if (voice) {
+    utterance.voice = voice;
+    utterance.lang = voice.lang;
+  }
+  utterance.rate = VOICE_RATE;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  let started = false;
+  let retried = false;
+  const retryWithoutVoice = (kind, detail) => {
+    if (retried || !voice) {
+      el("voiceProblem").textContent = "Voice callouts couldn't play. Check the volume and the silent switch, then tap Test voice in Settings.";
+      el("voiceProblem").hidden = false;
+      reportSpeech(kind, { ...detail, voice: voice ? voice.name : null, retried });
+      return;
+    }
+    retried = true;
+    failedVoices.add(voice.name);
+    reportSpeech(kind, { ...detail, voice: voice.name, retried: true });
+    speakNow(text, false);
+  };
+  utterance.onstart = () => {
+    started = true;
+    el("voiceProblem").hidden = true;
+  };
+  utterance.onerror = (event) => {
+    // Stopping a callout early on purpose also raises these, and isn't a failure.
+    if (event.error === "interrupted" || event.error === "canceled") return;
+    retryWithoutVoice("error", { error: event.error });
+  };
+  // Some phones fail silently, with no error at all.
+  setTimeout(() => {
+    if (!started && !speechSynthesis.speaking) retryWithoutVoice("silent", {});
+  }, SPEECH_START_TIMEOUT_MS);
+  speechSynthesis.speak(utterance);
+}
+
+// Recorded callouts. Home screen web apps on iPhone often can't use the speech engine, but play audio.
+const CLIP_FILES = {
+  "voice on": "voice-on",
+  "ready": "ready",
+  "run saved": "run-saved",
+  "sixty": "sixty",
+  "one hundred": "one-hundred",
+  "one hundred fifty": "one-hundred-fifty",
+  "two hundred": "two-hundred",
+  "one hundred metres": "one-hundred-metres",
+  "four hundred metres": "four-hundred-metres",
+  "eight hundred metres": "eight-hundred-metres",
+  "twenty roll. ready.": "twenty-roll",
+  "forty roll. ready.": "forty-roll",
+  "sixty roll. ready.": "sixty-roll",
+  "eighty roll. ready.": "eighty-roll",
+  "one hundred roll. ready.": "one-hundred-roll",
+  "one hundred twenty roll. ready.": "one-hundred-twenty-roll",
+  "one hundred forty roll. ready.": "one-hundred-forty-roll",
+  "sixty. one hundred. forty roll. ready.": "test"
+};
+let audioContext = null;
+let clipSource = null;
+const clipBuffers = new Map();
+
+function prepareAudio() {
+  const Context = window.AudioContext || window.webkitAudioContext;
+  if (!Context || audioContext) return;
+  audioContext = new Context();
+  for (const [text, file] of Object.entries(CLIP_FILES)) {
+    fetch(`voice/${file}.wav`)
+      .then((response) => response.arrayBuffer())
+      .then((data) => new Promise((resolve, reject) => audioContext.decodeAudioData(data, resolve, reject)))
+      .then((buffer) => clipBuffers.set(text, buffer))
+      .catch(() => {}); // That callout falls back to the speech engine.
+  }
+}
+
+// Only works during a tap, so it runs on every tap and before every callout.
+function unlockAudio() {
+  try {
+    // Plays with the silent switch on, like a music app, on iOS 17 and later.
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
+    if (!audioContext) return;
+    if (audioContext.state !== "running") audioContext.resume().catch(() => {});
+    // A silent sound started inside the tap opens the audio output on older iPhones.
+    const silent = audioContext.createBufferSource();
+    silent.buffer = audioContext.createBuffer(1, 1, 22050);
+    silent.connect(audioContext.destination);
+    silent.start(0);
+  } catch { /* The speech engine is still there as a fallback. */ }
+}
+
+// A plain audio player keeps working after a permission prompt pauses Web Audio,
+// which on iPhone can't restart without another tap. Web Audio is kept as the backup.
+const clipPlayer = new Audio();
+clipPlayer.preload = "auto";
+let clipReported = false;
+
+function playClip(text) {
+  const key = text.toLowerCase();
+  const file = CLIP_FILES[key];
+  if (!file) return false;
+  clipPlayer.pause();
+  clipPlayer.muted = false;
+  clipPlayer.src = `voice/${file}.wav`;
+  clipPlayer.play().then(() => {
+    el("voiceProblem").hidden = true;
+  }).catch((error) => {
+    // A newer callout replacing this one isn't a failure.
+    if (error.name === "AbortError") return;
+    if (!clipReported) {
+      clipReported = true;
+      remoteLog.log("clip_problem", { error: error.name, ...audioState() });
+      flushLogs();
+    }
+    const backup = () => {
+      const buffer = clipBuffers.get(key);
+      if (buffer && audioContext && audioContext.state === "running") playBuffer(buffer);
+      else speakWithEngine(text);
+    };
+    if (audioContext && audioContext.state !== "running") audioContext.resume().then(backup, backup);
+    else backup();
+  });
+  return true;
+}
+
+function playBuffer(buffer) {
+  if (clipSource) {
+    try { clipSource.stop(); } catch { /* Already finished. */ }
+  }
+  clipSource = audioContext.createBufferSource();
+  clipSource.buffer = buffer;
+  clipSource.connect(audioContext.destination);
+  clipSource.start(0);
+  el("voiceProblem").hidden = true;
+  return true;
+}
+
+function audioState() {
+  return { audio: audioContext ? audioContext.state : "none", clips: clipBuffers.size, installed: isInstalled(), audioSession: Boolean(navigator.audioSession) };
+}
+
+function speak(text) {
+  unlockAudio();
+  if (!playClip(text)) speakWithEngine(text);
+}
+
+function speakWithEngine(text) {
+  if (!("speechSynthesis" in window)) return;
+  // A paused engine on Android Chrome otherwise holds everything back.
+  speechSynthesis.resume();
+  if (speechSynthesis.speaking || speechSynthesis.pending) {
+    // Safari can drop speech that starts straight after a cancel, so wait a moment.
+    speechSynthesis.cancel();
+    setTimeout(() => speakNow(text, true), SPEECH_AFTER_CANCEL_MS);
+    return;
+  }
+  speakNow(text, true);
+}
+
+// Voices load late on some browsers, so this runs again when the list arrives.
+function fillVoiceChoices() {
+  if (!("speechSynthesis" in window)) return;
+  const english = speechSynthesis.getVoices().filter((v) => /^en/i.test(v.lang));
+  const current = chosenVoice();
+  el("voiceChoice").replaceChildren(...english.map((v) => {
+    const option = document.createElement("option");
+    option.value = v.name;
+    option.textContent = `${v.name} (${v.lang})`;
+    option.selected = Boolean(current) && v.name === current.name;
+    return option;
+  }));
+  el("voiceChooser").hidden = english.length === 0;
+}
+
+function announce(speed) {
+  if (speed === null || !el("voice").checked) return;
+  speak(spokenNumber(speed));
+  remoteLog.log("callout", { kmh: speed });
+}
+
+// A running total for live callouts only. Final distance times come from the analysis.
+function announceDistance(timeMs, kmh) {
+  if (timer.startMs === null) {
+    liveDistanceM = 0;
+    lastDistanceFixMs = null;
+  } else {
+    if (lastDistanceFixMs !== null) liveDistanceM += (kmh / 3.6) * ((timeMs - lastDistanceFixMs) / 1000);
+    lastDistanceFixMs = timeMs;
+  }
+  const meters = distanceCallouts.update(liveDistanceM, timer.startMs);
+  // Distance keeps adding up after lift-off, but a callout after "Run saved" would mislead.
+  const runOver = currentRun && currentRun.done;
+  if (meters === null || runOver || !el("voice").checked) return;
+  speak(`${spokenNumber(meters)} metres`);
+  remoteLog.log("callout", { meters });
+}
+
+function setVoice(enabled) {
+  localStorage.setItem(VOICE_KEY, enabled ? "1" : "0");
+  showVoiceQuick();
+  // iOS only allows speech after a button press, so this also doubles as a sound check.
+  if (enabled) speak("Voice on");
+}
+
+async function start() {
+  // Must run before any await, while iOS still counts this as a button press.
+  unlockAudio();
+  if (el("voice").checked) speak("Voice on");
+  setTimeout(() => remoteLog.log("audio", audioState()), 1000);
+  // iOS only grants motion access from a button press.
+  let motionPermission = "unavailable";
+  if (typeof DeviceMotionEvent !== "undefined") {
+    motionPermission = DeviceMotionEvent.requestPermission
+      ? await DeviceMotionEvent.requestPermission().catch(() => "denied")
+      : "granted";
+    if (motionPermission === "granted") listenForMotion();
+    else setMotion("Blocked, using GPS for launch", "Blocked");
+  } else {
+    setMotion("Unavailable, using GPS for launch", "None");
+  }
+  restartMotionWindow();
+  remoteLog.log("start", { motionPermission });
+  if (!navigator.geolocation) {
+    setStatus("No GPS", "error");
+    showAlert("This browser doesn't offer GPS. Open RacePS in Safari.");
+    remoteLog.log("no_geolocation");
+    flushLogs();
+    return;
+  }
+  startGps();
+  setStatus("Waiting for GPS", "wait");
+  setStarted(true);
+  wantWakeLock = true;
+  holdScreenOn();
+  // Asked here, not after a run, because some browsers show a prompt.
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+}
+
+function startGps() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  lastFixAt = Date.now();
+  watchId = navigator.geolocation.watchPosition(onPosition, onGpsError, {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 15000,
+  });
+}
+
+function onGpsError(error) {
+  remoteLog.log("gps_error", { code: error.code, message: error.message });
+  flushLogs();
+  if (error.code === error.PERMISSION_DENIED) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    setStatus("Location off", "error");
+    showAlert("RacePS can't use GPS. Check three places on your iPhone: 1) Settings, Privacy & Security, Location Services must be on. 2) In that list, set Safari Websites (or your browser) to While Using. 3) In Safari, tap the page menu next to the address, then Website Settings, and set Location to Allow. Then reload this page and tap Allow.");
+    setStarted(false);
+    return;
+  }
+  // Timeouts and weak signal are usually temporary, and the watch keeps running.
+  setStatus("Weak GPS", "wait");
+}
+
+// iOS can silently stop delivering fixes, for example after the app was in the background.
+function restartGpsIfStalled() {
+  if (watchId === null || Date.now() - lastFixAt < gpsRestartDelayMs(gpsRestarts)) return;
+  remoteLog.log("gps_restart", { stalledMs: Date.now() - lastFixAt, attempt: gpsRestarts + 1 });
+  gpsRestarts++;
+  setStatus("Reconnecting GPS", "wait");
+  startGps();
+}
+
+function listenForMotion() {
+  window.removeEventListener("devicemotion", onMotion);
+  window.addEventListener("devicemotion", onMotion);
+  motionListening = true;
+  motionListenStart = Date.now();
+}
+
+// Android logs showed minutes with no motion data and no error, so silence has to be detected.
+function checkMotion() {
+  if (!motionListening || document.visibilityState !== "visible") return;
+  const now = Date.now();
+  if (hasRecentMotion(motionLog, now) || now - motionListenStart < MOTION_STALL_MS) return;
+  setMotion("No data, using GPS for launch", "No data");
+  el("motionWarn").hidden = false;
+  if (now - lastMotionRetry < MOTION_RETRY_MS) return;
+  lastMotionRetry = now;
+  remoteLog.log("motion_silent", { seen: motionSeen });
+  listenForMotion();
+}
+
+function reportHealth() {
+  if (!gpsHealth.fixes) return;
+  // Reports can fire early when the app is hidden, so measure the real elapsed time.
+  const motionHz = rateHz(motionSinceReport, Date.now() - motionWindowStart);
+  restartMotionWindow();
+  remoteLog.log("gps_health", { ...gpsHealth.summary(), motionHz });
+  gpsHealth.reset();
+  if (Date.now() - lastHealthFlush >= HEALTH_FLUSH_MS) {
+    lastHealthFlush = Date.now();
+    flushLogs();
+  }
+}
+
+async function checkForUpdate() {
+  try {
+    const response = await fetch("version.json", { cache: "no-store" });
+    if (!response.ok) return;
+    const { version } = await response.json();
+    if (version !== updateAvailable && isNewerVersion(APP_VERSION, version)) {
+      updateAvailable = version;
+      remoteLog.log("update_available", { version });
+    }
+    showUpdateIfIdle();
+  } catch {
+    // Offline or a bad response. The next check will try again.
+  }
+}
+
+// Never interrupt a run. The prompt waits until the car has stopped and the timer re-armed.
+function showUpdateIfIdle() {
+  el("update").hidden = updateAvailable === null || timer.startMs !== null;
+}
+
+async function reloadForUpdate() {
+  remoteLog.log("update_reload", { version: updateAvailable });
+  await Promise.race([
+    flushLogs(),
+    new Promise((resolve) => setTimeout(resolve, UPDATE_FLUSH_TIMEOUT_MS)),
+  ]);
+  location.reload();
+}
+
+function restartMotionWindow() {
+  motionSinceReport = 0;
+  motionWindowStart = Date.now();
+}
+
+function showAlert(text) {
+  el("alert").textContent = text;
+  el("alert").hidden = false;
+}
+
+function hideAlert() {
+  el("alert").hidden = true;
+}
+
+function exportCsv() {
+  // One table for all three record types, so a single file can be used to tune the analysis.
+  const rows = [
+    "type,time,a,b,c,d,e",
+    ...samples.map((s) => `gps,${s.time},${s.kmh},${s.accuracy},${s.latitude},${s.longitude},${s.source}`),
+    ...motionLog.map((m) => `motion,${m.t},${m.x},${m.y},${m.z},${m.interval},`),
+    ...finishedRuns.filter((r) => r.quality !== "rejected")
+      .map((r) => `run,${r.launchMs},${r.delayMs},${r.rmse},${r.scale},${r.motionHz},${r.quality}`),
+  ];
+  const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "raceps-session.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// A locked screen suspends the page and stops GPS updates.
+let wantWakeLock = false;
+let wakeLock = null;
+async function holdScreenOn() {
+  if (!wantWakeLock || !navigator.wakeLock) return;
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch { /* Set Auto-Lock to Never if this fails. */ }
+}
+
+// Ends tracking without closing the app. Saved runs stay, and Start begins again cleanly.
+function stop() {
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+  watchId = null;
+  window.removeEventListener("devicemotion", onMotion);
+  motionListening = false;
+  wantWakeLock = false;
+  if (wakeLock) wakeLock.release().catch(() => {});
+  wakeLock = null;
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  clipPlayer.pause();
+  // A run still in progress has no ending, so it's dropped rather than saved half-finished.
+  const droppedRun = Boolean(currentRun && !currentRun.done);
+  timer.disarm();
+  currentRun = null;
+  standingOutcome = null;
+  pullTracker.restart(null);
+  stillSince = null;
+  lastFix = null;
+  reportHealth();
+  remoteLog.log("stop", { droppedRun });
+  flushLogs();
+  el("speed").textContent = "0";
+  setStatus("Stopped", "idle");
+  setStarted(false);
+  if (summaryPending) {
+    summaryPending = false;
+    openSummary();
+  }
+}
+
+function isInstalled() {
+  return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+}
+
+function platform() {
+  const agent = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(agent)) return /CriOS/.test(agent) ? "ios-chrome" : "ios-safari";
+  return /Android/.test(agent) ? "android" : null;
+}
+
+// Opens the steps for this phone first, and hides them once the app is installed.
+function showInstall() {
+  const installed = isInstalled();
+  el("installedNote").hidden = !installed;
+  el("installSteps").hidden = installed;
+  el("installHint").hidden = installed;
+  const mine = platform();
+  for (const steps of document.querySelectorAll("#installSteps details")) steps.open = steps.dataset.platform === mine;
+}
+prepareAudio();
+for (const type of ["touchend", "click"]) document.addEventListener(type, unlockAudio, { passive: true });
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    if (audioContext && audioContext.state !== "running") audioContext.resume().catch(() => {});
+    restartMotionWindow(); // Time spent hidden would otherwise read as a slow sensor.
+    checkForUpdate();
+    holdScreenOn();
+    restartGpsIfStalled();
+  } else {
+    reportHealth();
+    flushLogs({ pageClosing: true });
+  }
+});
+setInterval(restartGpsIfStalled, 1000);
+setInterval(checkMotion, 1000);
+setInterval(reportHealth, HEALTH_REPORT_MS);
+setInterval(checkForUpdate, UPDATE_CHECK_MS);
+checkForUpdate();
+el("updateReload").onclick = reloadForUpdate;
+window.addEventListener("error", (event) => {
+  remoteLog.log("page_error", { message: event.message, line: event.lineno });
+  flushLogs();
+});
+
+el("start").onclick = () => start().catch((error) => {
+  setStatus("Failed", "error");
+  el("rate").textContent = error.message;
+  remoteLog.log("start_failed", { message: error.message });
+  flushLogs();
+});
+el("stop").onclick = stop;
+el("installHint").onclick = () => {
+  showView("Settings");
+  el("installPanel").scrollIntoView({ block: "start" });
+};
+showInstall();
+el("export").onclick = exportCsv;
+const savedDriver = JSON.parse(localStorage.getItem(DRIVER_KEY) || "{}");
+el("driver").value = savedDriver.driver || "";
+el("car").value = savedDriver.car || "";
+const saveDriver = () => {
+  localStorage.setItem(DRIVER_KEY, JSON.stringify({ driver: el("driver").value, car: el("car").value }));
+};
+// On change, not input, so a half-typed name is never saved onto a run.
+const nameRuns = () => { commitRuns(nameLatestSession(savedRuns, cleanName("driver"), cleanName("car"), Date.now())); showMedians(); };
+for (const id of ["driver", "car"]) {
+  el(id).addEventListener("input", saveDriver);
+  el(id).addEventListener("change", nameRuns);
+}
+showRuns();
+showRunsStatus();
+el("viewSummary").onclick = () => {
+  shownRun = savedRuns.length - 1;
+  openSummary();
+};
+el("median").onclick = () => openSession(el("median").dataset.session);
+for (const tab of document.querySelectorAll("#tabs button")) tab.onclick = () => showView(tab.dataset.view);
+el("sessionBack").onclick = () => { el("sessionView").hidden = true; };
+el("deleteSession").onclick = askDeleteSession;
+el("deleteNo").onclick = () => openSession(shownSession);
+el("deleteYes").onclick = deleteShownSession;
+el("summaryToSession").onclick = () => {
+  openSession(savedRuns[shownRun].sessionId);
+  el("summary").hidden = true;
+};
+el("historyBackup").onclick = () => {
+  showView("Settings");
+  el("savedRunsPanel").scrollIntoView({ block: "start" });
+};
+el("unitKmh").onclick = () => setUnit("km/h");
+el("unitMph").onclick = () => setUnit("mph");
+el("voiceQuick").onclick = () => {
+  el("voice").checked = !el("voice").checked;
+  setVoice(el("voice").checked);
+};
+el("versionNote").textContent = `RacePS version ${APP_VERSION}`;
+el("speedUnit").textContent = speedUnit;
+el("unitKmh").setAttribute("aria-pressed", String(speedUnit === "km/h"));
+el("unitMph").setAttribute("aria-pressed", String(speedUnit === "mph"));
+el("backupRuns").onclick = downloadBackup;
+el("restoreRuns").onclick = () => el("restoreFile").click();
+el("restoreFile").addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  event.target.value = "";
+  if (file) restoreBackup(file).catch(() => { el("runsStatus").textContent = "Couldn't read that file, so nothing was changed."; });
+});
+el("summaryClose").onclick = () => {
+  closeOverlays();
+  showView("Run");
+};
+el("runPrev").onclick = () => stepRun(-1);
+el("runNext").onclick = () => stepRun(1);
+el("shareCard").onclick = () => shareCard().catch(() => {});
+el("share").addEventListener("change", (event) => setShare(event.target.checked));
+el("voice").checked = localStorage.getItem(VOICE_KEY) !== "0";
+el("voice").addEventListener("change", (event) => setVoice(event.target.checked));
+showVoiceQuick();
+fillVoiceChoices();
+if ("speechSynthesis" in window) speechSynthesis.addEventListener("voiceschanged", fillVoiceChoices);
+showMode();
+el("timingMode").addEventListener("change", (event) => {
+  if (event.target.value) localStorage.setItem(MODE_KEY, event.target.value);
+  else localStorage.removeItem(MODE_KEY);
+  showMode();
+  remoteLog.log("timing_mode", { fromKmh: timingFrom() });
+});
+el("voiceChoice").addEventListener("change", (event) => {
+  localStorage.setItem(VOICE_NAME_KEY, event.target.value);
+  speak("Sixty. One hundred. Forty roll. Ready.");
+});
+el("voiceTest").onclick = () => speak("Sixty. One hundred. Forty roll. Ready.");
+if (localStorage.getItem(SHARE_KEY) === "1") setShare(true, { userChanged: false });
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

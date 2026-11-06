@@ -1,0 +1,22 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-05T18:10:00Z" },
+  "title": "RacePS screen mockups",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "title": "1a. Run: before Start", "is_interactive": true },
+    "RunReady.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "title": "1b. Run: Ready", "is_interactive": true },
+    "RunLive.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "title": "1c. Run: moving", "is_interactive": true },
+    "Result.dc.html": { "x": 1410, "y": 0, "w": 390, "h": 1400, "title": "2. Run Result", "is_interactive": true },
+    "History.dc.html": { "x": 1880, "y": 0, "w": 390, "h": 844, "title": "3. History", "is_interactive": true },
+    "Session.dc.html": { "x": 2350, "y": 0, "w": 390, "h": 1240, "title": "4. Session Detail", "is_interactive": true },
+    "Settings.dc.html": { "x": 2820, "y": 0, "w": 390, "h": 1700, "title": "5. Settings", "is_interactive": true }
+  },
+  "order": ["Main.dc.html", "RunReady.dc.html", "RunLive.dc.html", "Result.dc.html", "History.dc.html", "Session.dc.html", "Settings.dc.html"],
+  "notes": {
+    "title": { "x": 0, "y": -300, "text": "RacePS: five core screens", "kind": "title1", "maxW": 3210 },
+    "examples": { "x": 0, "y": 900, "text": "All names, times and dates are example data, not real runs.", "w": 360, "fill": "orange" }
+  },
+  "designSystems": []
+}

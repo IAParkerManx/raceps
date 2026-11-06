@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RacePS Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#f4f5f7;text-decoration:none}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #ff5a1f;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 390px; height: 1700px; box-sizing: border-box; background: #0b0d10; color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column">
+  <header style="padding: 20px 16px 0">
+    <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em">Settings</h1>
+  </header>
+
+  <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px 16px 16px">
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; color: #a0a6b1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Name on your summary</h2>
+      <p style="margin: 0; color: #a0a6b1; font-size: 14px; line-height: 1.4">Optional. Stays on this phone and isn't sent in diagnostics.</p>
+      <label for="driver" style="font-size: 14px; font-weight: 600">Driver</label>
+      <input id="driver" maxlength="30" autocomplete="off" placeholder="Your name" style="min-height: 44px; box-sizing: border-box; background: #0b0d10; border: 1px solid #272b33; border-radius: 10px; color: #f4f5f7; font: inherit; padding: 0 12px">
+      <label for="car" style="font-size: 14px; font-weight: 600">Car</label>
+      <input id="car" maxlength="30" autocomplete="off" value="Golf GTI" style="min-height: 44px; box-sizing: border-box; background: #0b0d10; border: 1px solid #272b33; border-radius: 10px; color: #f4f5f7; font: inherit; padding: 0 12px">
+      <p style="margin: 0; color: #a0a6b1; font-size: 13px; line-height: 1.4">Changing the car starts a new session. Runs you've already saved keep their name.</p>
+    </section>
+
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+      <h2 style="margin: 0; color: #a0a6b1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Speed units</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ units }}" as="unit" hint-placeholder-count="2">
+          <button type="button" aria-pressed="{{ unit.pressed }}" onClick="{{ unit.pick }}" style="{{ unit.style }}">{{ unit.label }}</button>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <label style="display: flex; align-items: flex-start; gap: 12px">
+        <input type="checkbox" id="voice" checked style="flex: none; width: 22px; height: 22px; margin: 2px 0 0; accent-color: #ff5a1f">
+        <span style="display: flex; flex-direction: column; gap: 4px">
+          <strong style="font-size: 16px">Voice callouts</strong>
+          <span style="color: #a0a6b1; font-size: 14px; line-height: 1.4">Says Ready or "forty roll, ready", then announces speeds and 100, 400 and 800 metres during a run from a stop. Callouts can come about a second late, so use the results for timing.</span>
+        </span>
+      </label>
+      <label for="voiceChoice" style="font-size: 14px; font-weight: 600">Voice</label>
+      <select id="voiceChoice" style="min-height: 44px; background: #0b0d10; border: 1px solid #272b33; border-radius: 10px; color: #f4f5f7; font: inherit; padding: 0 8px">
+        <option>Samantha (en-US)</option>
+        <option>Daniel (en-GB)</option>
+      </select>
+      <button type="button" style="min-height: 48px; border: 1px solid #272b33; border-radius: 12px; background: transparent; color: #f4f5f7; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Test voice</button>
+      <p style="margin: 0; color: #a0a6b1; font-size: 13px; line-height: 1.4">For a clearer voice on iPhone, download an Enhanced voice in Settings, Accessibility, Spoken Content, Voices, then reopen this page.</p>
+    </section>
+
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+      <h2 style="margin: 0; color: #a0a6b1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Saved runs</h2>
+      <p style="margin: 0; font-size: 15px; font-weight: 600">20 runs saved on this phone.</p>
+      <p style="margin: 0; color: #a0a6b1; font-size: 13px; line-height: 1.4">A backup holds your run times, speed traces, and driver and car names. It has no GPS position. Your browser can clear saved runs if the app goes unused, so keep a copy somewhere safe.</p>
+      <button type="button" style="min-height: 48px; border: 1px solid #272b33; border-radius: 12px; background: transparent; color: #f4f5f7; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Download backup</button>
+      <button type="button" style="min-height: 48px; border: 1px solid #272b33; border-radius: 12px; background: transparent; color: #f4f5f7; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Restore from backup</button>
+      <button type="button" style="min-height: 48px; border: 1px solid #272b33; border-radius: 12px; background: transparent; color: #f4f5f7; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer">Download my session (CSV)</button>
+    </section>
+
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px">
+      <label style="display: flex; align-items: flex-start; gap: 12px">
+        <input type="checkbox" id="share" style="flex: none; width: 22px; height: 22px; margin: 2px 0 0; accent-color: #ff5a1f">
+        <span style="display: flex; flex-direction: column; gap: 4px">
+          <strong style="font-size: 16px">Share diagnostics with RacePS</strong>
+          <span style="color: #a0a6b1; font-size: 14px; line-height: 1.4">Sends speed, motion sensor data, run results, device type and errors to help improve timing. Your GPS position is not sent. Netlify, the host, may record your IP address. Off by default.</span>
+        </span>
+      </label>
+    </section>
+
+    <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+      <h2 style="margin: 0 0 2px; color: #a0a6b1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Diagnostics</h2>
+      <dl style="margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; font-size: 14px">
+        <sc-for list="{{ diagnostics }}" as="item" hint-placeholder-count="5">
+          <dt style="color: #a0a6b1">{{ item.name }}</dt>
+          <dd style="margin: 0; text-align: right; font-variant-numeric: tabular-nums">{{ item.value }}</dd>
+        </sc-for>
+      </dl>
+      <p style="margin: 4px 0 0; color: #a0a6b1; font-size: 13px">RacePS version 0.11.0</p>
+    </section>
+  </div>
+
+  <nav aria-label="Main" style="margin-top: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid #272b33; background: #0b0d10">
+    <a href="Main.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; color: #a0a6b1; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18a9 9 0 1 1 16 0"></path><path d="M12 14l4-5"></path><circle cx="12" cy="14" r="1.2"></circle></svg>
+      Run
+    </a>
+    <a href="History.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; color: #a0a6b1; font-size: 12px; font-weight: 600">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>
+      History
+    </a>
+    <a href="Settings.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 64px; color: #ff5a1f; font-size: 12px; font-weight: 700">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>
+      Settings
+    </a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1700}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { unit: 'km/h' };
+  }
+  renderVals() {
+    const picked = this.state.unit;
+    const base = 'min-height: 48px; border-radius: 12px; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer;';
+    return {
+      units: ['km/h', 'mph'].map((label) => ({
+        label,
+        pressed: label === picked ? 'true' : 'false',
+        style: base + (label === picked
+          ? ' border: 1px solid #ff5a1f; background: #ff5a1f; color: #140600;'
+          : ' border: 1px solid #272b33; background: transparent; color: #f4f5f7;'),
+        pick: () => this.setState({ unit: label }),
+      })),
+      diagnostics: [
+        { name: 'Live estimate', value: '0-100 km/h 5.4 s' },
+        { name: 'GPS delay found', value: '480 ms' },
+        { name: 'GPS rate', value: '10 Hz, 0% no speed' },
+        { name: 'GPS accuracy', value: '4 m' },
+        { name: 'Motion sensor', value: 'Active' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

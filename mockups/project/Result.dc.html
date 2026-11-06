@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RacePS Run Result</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#f4f5f7;text-decoration:none}
+a:focus-visible,button:focus-visible{outline:2px solid #ff5a1f;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 390px; height: 1400px; box-sizing: border-box; background: #0b0d10; color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; flex-direction: column; gap: 12px; padding: 20px 16px 24px">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+    <a href="Session.dc.html" style="display: flex; align-items: center; gap: 4px; min-height: 44px; color: #a0a6b1; font-size: 15px; font-weight: 600">
+      <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"></path></svg>
+      Session
+    </a>
+    <span style="color: #a0a6b1; font-size: 14px">Run 5 of 5</span>
+  </header>
+
+  <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 16px">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+      <span style="font-size: 15px; font-weight: 600">0-100 km/h</span>
+      <span style="border: 1px solid #3ddc84; border-radius: 99px; color: #3ddc84; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; padding: 3px 10px; text-transform: uppercase">Good</span>
+    </div>
+    <div style="display: flex; align-items: baseline; gap: 8px; margin-top: 4px">
+      <span style="font-size: 72px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums">5.42</span>
+      <span style="font-size: 20px; font-weight: 700">s</span>
+      <span style="color: #a0a6b1; font-size: 16px; font-variant-numeric: tabular-nums">±0.15</span>
+    </div>
+    <p style="margin: 8px 0 0; color: #d6d9de; font-size: 14px">0.09 s quicker than this session's median of 5.51 s.</p>
+    <p style="margin: 4px 0 0; color: #a0a6b1; font-size: 13px">Golf GTI, Thu 5 Nov, 18:42. Standing start, peak 162 km/h.</p>
+  </section>
+
+  <figure style="margin: 0; background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px 10px">
+    <figcaption style="color: #a0a6b1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Speed over time</figcaption>
+    <svg role="img" aria-label="Speed rising from 0 to a peak of 162 km/h after 14.5 seconds, passing 100 km/h at 5.42 seconds" width="326" height="160" viewBox="0 0 326 160" style="display: block; margin-top: 6px; max-width: 100%">
+      <g stroke="#272b33" stroke-width="1">
+        <path d="M30 130H318"></path>
+        <path d="M30 97.5H318" stroke-dasharray="3 4"></path>
+        <path d="M30 65H318" stroke-dasharray="3 4"></path>
+        <path d="M30 32.5H318" stroke-dasharray="3 4"></path>
+      </g>
+      <g fill="#a0a6b1" font-size="11" font-family="inherit" text-anchor="end">
+        <text x="24" y="134">0</text>
+        <text x="24" y="101.5">50</text>
+        <text x="24" y="69">100</text>
+        <text x="24" y="36.5">150</text>
+      </g>
+      <g fill="#a0a6b1" font-size="11" font-family="inherit" text-anchor="middle">
+        <text x="30" y="148">0 s</text>
+        <text x="120" y="148">5 s</text>
+        <text x="210" y="148">10 s</text>
+        <text x="300" y="148">15 s</text>
+      </g>
+      <polyline fill="none" stroke="#ff5a1f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="30,130 48,115.7 66,100.75 78.8,91 102,76.7 127.6,65 156,55.25 192,46.15 228,37.7 254.3,32.5 280.2,27.3 291,24.7 309,32.5"></polyline>
+      <circle cx="127.6" cy="65" r="4.5" fill="#f4f5f7" stroke="#0b0d10" stroke-width="2"></circle>
+      <text x="136" y="81" fill="#f4f5f7" font-size="12" font-weight="700" font-family="inherit">100 km/h, 5.42 s</text>
+    </svg>
+  </figure>
+
+  <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px 6px">
+    <h2 style="margin: 0 0 4px; color: #ff5a1f; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">From a stop</h2>
+    <sc-for list="{{ speeds }}" as="row" hint-placeholder-count="4">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-top: 1px solid #272b33; padding: 9px 0">
+        <span style="font-size: 15px">{{ row.label }} <small style="color: #a0a6b1; font-size: 13px">{{ row.detail }}</small></span>
+        <span style="font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums">{{ row.value }}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px 6px">
+    <h2 style="margin: 0 0 4px; color: #ff5a1f; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Splits: time between these speeds only</h2>
+    <sc-for list="{{ splits }}" as="row" hint-placeholder-count="2">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-top: 1px solid #272b33; padding: 9px 0">
+        <span style="font-size: 15px">{{ row.label }} <small style="color: #a0a6b1; font-size: 13px">{{ row.detail }}</small></span>
+        <span style="font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums">{{ row.value }}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <section style="background: #15181d; border: 1px solid #272b33; border-radius: 16px; padding: 14px 16px 6px">
+    <h2 style="margin: 0 0 4px; color: #ff5a1f; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase">Distance</h2>
+    <sc-for list="{{ distances }}" as="row" hint-placeholder-count="4">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; border-top: 1px solid #272b33; padding: 9px 0">
+        <span style="font-size: 15px">{{ row.label }} <small style="color: #a0a6b1; font-size: 13px">{{ row.detail }}</small></span>
+        <span style="font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums">{{ row.value }}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <p style="margin: 0; color: #a0a6b1; font-size: 13px; line-height: 1.45">Grade: good. Phone GPS estimate. Compare runs made with RacePS, in similar conditions.</p>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+    <a href="Result.dc.html" aria-label="Previous run" style="display: flex; align-items: center; justify-content: center; min-height: 52px; border: 1px solid #272b33; border-radius: 14px; font-size: 15px; font-weight: 700">Previous run</a>
+    <button type="button" disabled aria-label="Next run" style="min-height: 52px; border: 1px solid #272b33; border-radius: 14px; background: transparent; color: #a0a6b1; font: inherit; font-size: 15px; font-weight: 700; opacity: 0.55">Next run</button>
+  </div>
+  <button type="button" style="min-height: 56px; border: 1px solid #272b33; border-radius: 14px; background: transparent; color: #f4f5f7; font: inherit; font-size: 16px; font-weight: 700; cursor: pointer">Share image</button>
+  <a href="RunReady.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 64px; border-radius: 14px; background: #ff5a1f; color: #140600; font-size: 20px; font-weight: 800">Back to timing</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      speeds: [
+        { label: '0-60 km/h', detail: '±0.15', value: '2.71 s' },
+        { label: '0-60 mph', detail: '±0.15', value: '5.18 s' },
+        { label: '0-100 km/h', detail: '±0.15', value: '5.42 s' },
+        { label: '0-150 km/h', detail: '±0.15', value: '12.46 s' },
+      ],
+      splits: [
+        { label: '60-100 km/h', detail: '±0.10', value: '2.71 s' },
+        { label: '100-150 km/h', detail: '±0.10', value: '7.04 s' },
+      ],
+      distances: [
+        { label: '100 m', detail: '104 km/h', value: '5.85 s' },
+        { label: '1/8 mile', detail: '129 km/h', value: '9.00 s' },
+        { label: '400 m', detail: '158 km/h', value: '13.85 s' },
+        { label: '1/4 mile', detail: '158 km/h', value: '13.90 s' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
