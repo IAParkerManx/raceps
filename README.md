@@ -17,6 +17,7 @@ The app is used in one place: a phone on a mount, in a car, often at night. The 
 - **Read at a glance.** One huge speed readout and one orange action per screen, on a dark base that won't glare at night. Callouts are spoken, so the driver never reads mid-run.
 - **Honest numbers.** Sessions show the median of counted runs, not the single best. Each run is graded Good or Fair with the reason given, and any run can be excluded. GPS-only timing is labelled as an estimate.
 - **Guidance where it's needed.** The Run screen tells you how to mount the phone and when a run is valid. Settings walks through installing on iPhone and Android, step by step.
+- **Accessible.** Every text colour meets WCAG AA contrast (4.5:1 or more), and control outlines meet the 3:1 non-text minimum. Full-screen overlays take focus when they open, keep the screen behind them out of reach, close with Escape, and return focus to where you were. Speed and splits are spoken, so a run never depends on reading the screen.
 - **States designed first.** Each screen state was mocked up before it was built: Ready, Running, Result, Session, History and Settings. The mock-ups are in [`mockups/project`](mockups/project). They open in the design-canvas tool they were made in, and show template placeholders in a plain browser.
 
 ## How it works

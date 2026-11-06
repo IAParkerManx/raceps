@@ -17,6 +17,7 @@
     --bg: #0b0d10; --panel: #15181d; --line: #272b33;
     --text: #f4f5f7; --muted: #a0a6b1; --soft: #d6d9de; --accent: #ff5a1f; --on-accent: #140600;
     --good: #3ddc84; --warn: #ffc247; --bad: #ff6b6b;
+    --control: #6b7280; /* Control outlines: at least 3:1 against --bg and --panel (WCAG 1.4.11). */
     --tabs: 4.1rem;
   }
   * { box-sizing: border-box; }
@@ -35,7 +36,7 @@
     border: 0; border-radius: .8rem; color: inherit; cursor: pointer; font: inherit; font-weight: 700;
     min-height: 3.25rem; padding: .75rem 1rem; width: 100%;
   }
-  .secondary { background: transparent; border: 1px solid var(--line); color: var(--text); }
+  .secondary { background: transparent; border: 1px solid var(--control); color: var(--text); }
   .secondary:disabled { color: var(--muted); opacity: .5; }
   .primary, #start { background: var(--accent); color: var(--on-accent); font-size: 1.25rem; font-weight: 800; min-height: 4rem; }
   .danger { background: transparent; border: 1px solid var(--bad); color: var(--bad); }
@@ -52,7 +53,8 @@
   .trap { color: var(--muted); font-size: .8rem; }
   .grade { font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
   .grade.good { color: var(--good); } .grade.fair { color: var(--warn); } .grade.rejected { color: var(--bad); } .grade.out { color: var(--bad); }
-  input:not([type]), select { background: var(--bg); border: 1px solid var(--line); border-radius: .6rem; color: var(--text); font: inherit; min-height: 2.75rem; padding: .5rem .7rem; width: 100%; }
+  input:not([type]), select { background: var(--bg); border: 1px solid var(--control); border-radius: .6rem; color: var(--text); font: inherit; min-height: 2.75rem; padding: .5rem .7rem; width: 100%; }
+  ::placeholder { color: var(--muted); opacity: 1; }
   .field { display: block; font-size: .875rem; font-weight: 600; margin-top: .6rem; }
   .field input { margin-top: .25rem; }
   dl { display: grid; font-size: .9rem; gap: .35rem 1rem; grid-template-columns: auto 1fr; margin: 0; }
@@ -128,7 +130,7 @@
 
   /* History */
   #carFilters { display: flex; flex-wrap: wrap; gap: .5rem; }
-  .chip { border: 1px solid var(--line); border-radius: 99px; background: transparent; font-size: .875rem; min-height: 2.75rem; padding: 0 .9rem; width: auto; }
+  .chip { border: 1px solid var(--control); border-radius: 99px; background: transparent; font-size: .875rem; min-height: 2.75rem; padding: 0 .9rem; width: auto; }
   .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .chip[data-unit] { border-radius: .75rem; min-height: 3rem; width: 100%; }
   .sessionRow { align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; display: flex; font-weight: 400; gap: .75rem; justify-content: space-between; min-height: 5.25rem; padding: .75rem; padding-left: 1rem; text-align: left; }
@@ -152,7 +154,7 @@
   .runOpen { background: none; flex: 1; font-weight: 400; min-height: 3rem; min-width: 0; padding: .25rem 0; text-align: left; }
   .runOpen strong { font-size: .95rem; margin-right: .4rem; }
   .runOpen small { color: var(--muted); display: block; font-size: .8rem; font-variant-numeric: tabular-nums; }
-  .runToggle { background: transparent; border: 1px solid var(--line); border-radius: .6rem; flex: none; font-size: .8rem; min-height: 2.75rem; min-width: 5.25rem; padding: 0 .5rem; width: auto; }
+  .runToggle { background: transparent; border: 1px solid var(--control); border-radius: .6rem; flex: none; font-size: .8rem; min-height: 2.75rem; min-width: 5.25rem; padding: 0 .5rem; width: auto; }
   #deleteConfirm .cardNav { margin-top: .75rem; }
 
   /* Run result */
@@ -362,7 +364,7 @@
   <button data-view="Settings"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"></path><circle cx="16" cy="7" r="2"></circle><circle cx="8" cy="17" r="2"></circle></svg>Settings</button>
 </nav>
 
-<div id="sessionView" role="dialog" aria-label="Session detail" hidden>
+<div id="sessionView" role="dialog" aria-modal="true" aria-label="Session detail" tabindex="-1" hidden>
   <button id="sessionBack" class="back"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>History</button>
   <div>
     <h1 id="sessionCar"></h1>
@@ -388,7 +390,7 @@
   </section>
 </div>
 
-<div id="summary" role="dialog" aria-label="Run summary" hidden>
+<div id="summary" role="dialog" aria-modal="true" aria-label="Run summary" tabindex="-1" hidden>
   <div class="overlayHead">
     <button id="summaryToSession" class="back"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"></path></svg>Session</button>
     <p class="note" id="cardPosition"></p>
@@ -430,7 +432,7 @@
 <script src="run-store.js"></script>
 <script src="remote-log.js"></script>
 <script>
-const APP_VERSION = "0.14.1"; // Keep in step with version.json. A test checks this.
+const APP_VERSION = "0.14.2"; // Keep in step with version.json. A test checks this.
 const UPDATE_CHECK_MS = 300000;
 const UPDATE_FLUSH_TIMEOUT_MS = 2000;
 let updateAvailable = null;
@@ -1956,6 +1958,34 @@ el("voiceChoice").addEventListener("change", (event) => {
 el("voiceTest").onclick = () => speak("Sixty. One hundred. Forty roll. Ready.");
 if (localStorage.getItem(SHARE_KEY) === "1") setShare(true, { userChanged: false });
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+// The session and summary overlays cover the whole screen, so keyboard and screen-reader focus
+// has to follow them: in on open, back to where it was on close, and nothing behind reachable.
+// Watching `hidden` covers every place that opens or closes them.
+const overlayStack = [];
+function syncOverlays() {
+  const open = ["sessionView", "summary"].filter((id) => !el(id).hidden);
+  const top = open[open.length - 1] || null;
+  const behind = [el("update"), el("viewRun"), el("viewHistory"), el("viewSettings"), el("tabs")];
+  if (top === "summary" && open.includes("sessionView")) behind.push(el("sessionView"));
+  for (const part of [...behind, el("sessionView")]) part.inert = Boolean(top) && behind.includes(part);
+  while (overlayStack.length && !open.includes(overlayStack[overlayStack.length - 1].id)) {
+    const { returnTo } = overlayStack.pop();
+    if (returnTo && returnTo.isConnected && !returnTo.closest("[hidden], [inert]")) returnTo.focus();
+    else if (overlayStack.length) el(overlayStack[overlayStack.length - 1].id).focus();
+  }
+  if (top && (!overlayStack.length || overlayStack[overlayStack.length - 1].id !== top)) {
+    overlayStack.push({ id: top, returnTo: document.activeElement });
+    el(top).focus();
+  }
+}
+const overlayWatch = new MutationObserver(syncOverlays);
+for (const id of ["sessionView", "summary"]) overlayWatch.observe(el(id), { attributes: true, attributeFilter: ["hidden"] });
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || !overlayStack.length) return;
+  const top = overlayStack[overlayStack.length - 1].id;
+  (top === "summary" ? el("summaryToSession") : el("sessionBack")).click();
+});
 </script>
 </body>
 </html>
